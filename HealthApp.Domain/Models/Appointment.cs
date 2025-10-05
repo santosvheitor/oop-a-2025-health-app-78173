@@ -8,6 +8,6 @@ public class Appointment
     public DateTime Date { get; set; }
     public string Status { get; set; }
 
-    public Patient Patient { get; set; }
-    public Doctor Doctor { get; set; }
+    public Patient? Patient { get; set; }
+    public Doctor? Doctor { get; set; }
 }
