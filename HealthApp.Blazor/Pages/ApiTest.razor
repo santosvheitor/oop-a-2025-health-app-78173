@@ -1,0 +1,28 @@
+@page "/ApiTest"
+@inject HttpClient Http
+
+<h3>Teste API</h3>
+
+@if (message is null)
+{
+    <p>Carregando...</p>
+}
+else
+{
+    <p>@message</p>
+}
+
+@code {
+    private string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetFromJsonAsync<Response>("api/test");
+        message = result?.message;
+    }
+
+    private class Response
+    {
+        public string? message { get; set; }
+    }
+}

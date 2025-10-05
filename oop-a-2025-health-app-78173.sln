@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthApp.Api", "HealthApp.Api\HealthApp.Api.csproj", "{C980F73D-8CFB-4B6C-88D7-F09507CB7864}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthApp.Blazor", "HealthApp.Blazor\HealthApp.Blazor.csproj", "{E4291C73-CF02-4F80-81A5-E8EFA0189418}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthApp.Domain", "HealthApp.Domain\HealthApp.Domain.csproj", "{1E836896-3100-4025-94C8-319A3C53B02A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthApp.Data", "HealthApp.Data\HealthApp.Data.csproj", "{93D392BD-C904-467D-BABC-6744B7F68B43}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C980F73D-8CFB-4B6C-88D7-F09507CB7864}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C980F73D-8CFB-4B6C-88D7-F09507CB7864}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C980F73D-8CFB-4B6C-88D7-F09507CB7864}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C980F73D-8CFB-4B6C-88D7-F09507CB7864}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4291C73-CF02-4F80-81A5-E8EFA0189418}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4291C73-CF02-4F80-81A5-E8EFA0189418}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4291C73-CF02-4F80-81A5-E8EFA0189418}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4291C73-CF02-4F80-81A5-E8EFA0189418}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E836896-3100-4025-94C8-319A3C53B02A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E836896-3100-4025-94C8-319A3C53B02A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E836896-3100-4025-94C8-319A3C53B02A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E836896-3100-4025-94C8-319A3C53B02A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93D392BD-C904-467D-BABC-6744B7F68B43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93D392BD-C904-467D-BABC-6744B7F68B43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93D392BD-C904-467D-BABC-6744B7F68B43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93D392BD-C904-467D-BABC-6744B7F68B43}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

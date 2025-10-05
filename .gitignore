@@ -1,0 +1,19 @@
+# Build folders
+bin/
+obj/
+
+# Rider / IDE files
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vscode/
+
+# Dotnet files
+*.db
+*.log
+*.pdb
+*.DS_Store
+*.cache
+
