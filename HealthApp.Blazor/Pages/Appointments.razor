@@ -1,0 +1,34 @@
+@page "/appointments"
+
+<h3>Appointments</h3>
+
+@if (appointments == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Patient</th>
+            <th>Doctor</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var appointment in appointments)
+        {
+            <tr>
+                <td>@appointment.Id</td>
+                <td>@appointment.Date</td>
+                <td>@appointment.Status</td>
+                <td>@appointment.Patient?.FullName</td>
+                <td>@appointment.Doctor?.FullName</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

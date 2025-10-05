@@ -20,11 +20,14 @@ public class AppointmentController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Appointment>>> GetAppointments()
     {
-        return await _context.Appointments
+        var appointments = await _context.Appointments
             .Include(a => a.Patient)
             .Include(a => a.Doctor)
             .ToListAsync();
+
+        return Ok(appointments);
     }
+
 
     // GET: api/Appointment/5
     [HttpGet("{id}")]
@@ -38,8 +41,9 @@ public class AppointmentController : ControllerBase
         if (appointment == null)
             return NotFound();
 
-        return appointment;
+        return Ok(appointment);
     }
+
 
     // POST: api/Appointment
     [HttpPost]
@@ -67,7 +71,13 @@ public class AppointmentController : ControllerBase
         _context.Appointments.Add(appointment);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetAppointment), new { id = appointment.Id }, appointment);
+        // Recarrega o appointment com os relacionamentos
+        var result = await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Doctor)
+            .FirstOrDefaultAsync(a => a.Id == appointment.Id);
+
+        return CreatedAtAction(nameof(GetAppointment), new { id = appointment.Id }, result);
     }
 
     // PUT: api/Appointment/5
@@ -105,7 +115,13 @@ public class AppointmentController : ControllerBase
                 throw;
         }
 
-        return NoContent();
+        // Recarrega o appointment atualizado com os relacionamentos
+        var updatedAppointment = await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Doctor)
+            .FirstOrDefaultAsync(a => a.Id == appointment.Id);
+
+        return Ok(updatedAppointment);
     }
 
     // DELETE: api/Appointment/5
