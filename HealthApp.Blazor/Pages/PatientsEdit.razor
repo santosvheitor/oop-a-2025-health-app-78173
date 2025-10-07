@@ -1,6 +1,58 @@
-@page "/PatientsEdit"
-<h3>PatientsEdit</h3>
+@page "/patients/edit/{id:int}"
+@using HealthApp.Domain.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h3>Edit Patient</h3>
+
+@if (patient == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="patient" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Full Name</label>
+            <InputText class="form-control" @bind-Value="patient.FullName" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <InputText class="form-control" @bind-Value="patient.Email" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Password</label>
+            <InputText class="form-control" type="password" @bind-Value="patient.PasswordHash" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+    </EditForm>
+}
 
 @code {
-    
+    [Parameter] public int id { get; set; }
+
+    private PatientModel? patient;
+
+    protected override async Task OnInitializedAsync()
+    {
+        patient = await Http.GetFromJsonAsync<PatientModel>($"api/patient/{id}");
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await Http.PutAsJsonAsync($"api/patient/{id}", patient);
+        NavigationManager.NavigateTo("/patients");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/patients");
+    }
 }
