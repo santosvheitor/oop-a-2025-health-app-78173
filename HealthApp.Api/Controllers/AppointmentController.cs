@@ -49,29 +49,29 @@ public class AppointmentController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Appointment>> PostAppointment(Appointment appointment)
     {
-        // Validação básica de campos obrigatórios
+        // Basic validation of mandatory fields
         if (appointment.PatientId == 0 || appointment.DoctorId == 0 || appointment.Date == default)
             return BadRequest("PatientId, DoctorId, and Date are required.");
 
-        // Verifica se paciente e médico existem
+        // Verify if Patient and doctor exists 
         var patientExists = await _context.Patients.AnyAsync(p => p.Id == appointment.PatientId);
         var doctorExists = await _context.Doctors.AnyAsync(d => d.Id == appointment.DoctorId);
 
         if (!patientExists) return BadRequest("Patient not found.");
         if (!doctorExists) return BadRequest("Doctor not found.");
 
-        // Verifica se o médico já tem outro compromisso no mesmo horário
+        // Verify if doctor has already another appointment at the same time
         var conflict = await _context.Appointments
             .AnyAsync(a => a.DoctorId == appointment.DoctorId && a.Date == appointment.Date);
 
         if (conflict)
             return BadRequest("The doctor already has an appointment at that time.");
 
-        // Adiciona o novo agendamento
+        // Add a new appointment
         _context.Appointments.Add(appointment);
         await _context.SaveChangesAsync();
 
-        // Recarrega o appointment com os relacionamentos
+        // Load appointments with relationships 
         var result = await _context.Appointments
             .Include(a => a.Patient)
             .Include(a => a.Doctor)
@@ -87,14 +87,14 @@ public class AppointmentController : ControllerBase
         if (id != appointment.Id)
             return BadRequest();
 
-        // Checa se paciente e médico existem
+        // Check if patient and doctor exists 
         var patientExists = await _context.Patients.AnyAsync(p => p.Id == appointment.PatientId);
         var doctorExists = await _context.Doctors.AnyAsync(d => d.Id == appointment.DoctorId);
 
         if (!patientExists) return BadRequest("Patient not found.");
         if (!doctorExists) return BadRequest("Doctor not found.");
 
-        // Verifica conflito de horário do médico
+        // Check doctor schedule conflict 
         var conflict = await _context.Appointments
             .AnyAsync(a => a.DoctorId == appointment.DoctorId && a.Date == appointment.Date && a.Id != appointment.Id);
 
@@ -115,7 +115,7 @@ public class AppointmentController : ControllerBase
                 throw;
         }
 
-        // Recarrega o appointment atualizado com os relacionamentos
+        // Reloads the updated appointment with the relationships
         var updatedAppointment = await _context.Appointments
             .Include(a => a.Patient)
             .Include(a => a.Doctor)

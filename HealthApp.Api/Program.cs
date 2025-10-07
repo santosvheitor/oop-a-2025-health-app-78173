@@ -5,28 +5,28 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔹 Connection String (ajuste o nome se for diferente no appsettings.json)
+// Connection String 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// 🔹 Contexto de domínio (hospital)
+// Domain context (hospital)
 builder.Services.AddDbContext<HospitalContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 🔹 Contexto de autenticação (Identity)
+// Authentication context (Identity)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 🔹 Configuração do Identity
+// Identity Configuration
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>() 
     .AddDefaultTokenProviders();
 
-// 🔹 Configuração da API
+// API configuration 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 🔹 CORS – permite que o Blazor acesse a API
+// 🔹 CORS – Allows Blazor to access the API
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
@@ -40,7 +40,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// 🔹 Pipeline HTTP
+// Pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -55,7 +55,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// 🔹 Cria as roles no banco, se ainda não existirem
+// 🔹 Allows Blazor to access the API 
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();

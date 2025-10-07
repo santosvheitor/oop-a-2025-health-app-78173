@@ -36,7 +36,7 @@ public class PatientController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Patient>> PostPatient(Patient patient)
     {
-        // 🔹 1. Verificação de campos obrigatórios
+        // Checking required fields
         if (string.IsNullOrWhiteSpace(patient.FullName) || string.IsNullOrWhiteSpace(patient.Email))
             return BadRequest("Full name and email are required.");
         
