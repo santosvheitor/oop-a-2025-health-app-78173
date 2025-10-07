@@ -4,7 +4,7 @@
 
 @if (patients == null)
 {
-    <p>Loading...</p>
+    <p><em>Loading...</em></p>
 }
 else
 {
@@ -14,6 +14,7 @@ else
             <th>Id</th>
             <th>Full Name</th>
             <th>Email</th>
+            <th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -23,8 +24,14 @@ else
                 <td>@p.Id</td>
                 <td>@p.FullName</td>
                 <td>@p.Email</td>
+                <td>
+                    <button class="btn btn-primary" @onclick="() => EditPatient(p.Id)">Edit</button>
+                    <button class="btn btn-danger" @onclick="() => DeletePatient(p.Id)">Delete</button>
+                </td>
             </tr>
         }
         </tbody>
     </table>
+    
+    <button class="btn btn-success" @onclick="AddPatient">Add Patient</button>
 }

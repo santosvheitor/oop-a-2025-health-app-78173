@@ -1,25 +1,48 @@
+using HealthApp.Domain.Models;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using System.Net.Http;
 using System.Net.Http.Json;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace HealthApp.Blazor.Pages
+namespace HealthApp.Blazor.Pages;
+
+
+public partial class Patient 
 {
-    public partial class Patient
+    // Inject HttpClient
+    [Inject] private HttpClient Http { get; set; } = default!;
+
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+
+    private List<PatientModel> patients = new();
+
+    protected override async Task OnInitializedAsync()
     {
-        [Inject]
-        private HttpClient Http { get; set; }
+        patients = await Http.GetFromJsonAsync<List<PatientModel>>("api/patient");
+    }
 
-        private List<PatientModel> patients;
+    private void AddPatient()
+    {
+        NavigationManager.NavigateTo("/patients/add");
+    }
 
-        protected override async Task OnInitializedAsync()
+    private void EditPatient(int id)
+    {
+        NavigationManager.NavigateTo($"/patients/edit/{id}");
+    }
+
+    private async Task DeletePatient(int id)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure?");
+        if (confirmed)
         {
+            await Http.DeleteAsync($"api/patient/{id}");
             patients = await Http.GetFromJsonAsync<List<PatientModel>>("api/patient");
-        }
-
-        public class PatientModel
-        {
-            public int Id { get; set; }
-            public string FullName { get; set; }
-            public string Email { get; set; }
         }
     }
 }
