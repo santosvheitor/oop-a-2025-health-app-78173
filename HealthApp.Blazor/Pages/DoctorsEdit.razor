@@ -1,0 +1,24 @@
+@page "/doctors/edit/{Id:int}"
+
+<h3>Edit Doctor</h3>
+
+<EditForm Model="@doctor" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Full Name:</label>
+        <InputText @bind-Value="doctor.FullName" />
+    </div>
+    <div>
+        <label>Specialty:</label>
+        <InputText @bind-Value="doctor.Specialty" />
+    </div>
+    <div>
+        <label>Email:</label>
+        <InputText @bind-Value="doctor.Email" />
+    </div>
+
+    <button type="submit">Save</button>
+    <button type="button" @onclick="Cancel">Cancel</button>
+</EditForm>

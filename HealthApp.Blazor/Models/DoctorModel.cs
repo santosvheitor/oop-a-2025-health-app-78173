@@ -1,6 +1,6 @@
-namespace HealthApp.Domain.Models;
+namespace HealthApp.Blazor.Models;
 
-public class Doctor
+public class DoctorModel
 {
     public int Id { get; set; }
     public string FullName { get; set; } = string.Empty;

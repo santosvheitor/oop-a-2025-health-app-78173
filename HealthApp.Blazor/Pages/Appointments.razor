@@ -2,20 +2,27 @@
 
 <h3>Appointments</h3>
 
+<button class="btn btn-primary mb-3" @onclick="AddAppointment">Add Appointment</button>
+
 @if (appointments == null)
 {
     <p><em>Loading...</em></p>
 }
+else if (!appointments.Any())
+{
+    <p>No appointments found.</p>
+}
 else
 {
-    <table class="table">
+    <table class="table table-striped">
         <thead>
         <tr>
-            <th>Id</th>
+            <th>ID</th>
             <th>Date</th>
             <th>Status</th>
             <th>Patient</th>
             <th>Doctor</th>
+            <th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -23,10 +30,14 @@ else
         {
             <tr>
                 <td>@appointment.Id</td>
-                <td>@appointment.Date</td>
+                <td>@appointment.Date.ToString("g")</td>
                 <td>@appointment.Status</td>
                 <td>@appointment.Patient?.FullName</td>
                 <td>@appointment.Doctor?.FullName</td>
+                <td>
+                    <button class="btn btn-sm btn-warning me-2" @onclick="() => EditAppointment(appointment.Id)">Edit</button>
+                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteAppointment(appointment.Id)">Delete</button>
+                </td>
             </tr>
         }
         </tbody>

@@ -2,10 +2,10 @@
 
 #nullable disable
 
-namespace HealthApp.Data.Migrations
+namespace HealthApp.Data.Migrations.ApplicationDb
 {
     /// <inheritdoc />
-    public partial class CreateHospitalTables : Migration
+    public partial class InitialIdentityMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

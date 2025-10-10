@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace HealthApp.Blazor.Pages;
 
 
-public partial class Patient 
+public partial class PatientsPage 
 {
     // Inject HttpClient
     [Inject] private HttpClient Http { get; set; } = default!;

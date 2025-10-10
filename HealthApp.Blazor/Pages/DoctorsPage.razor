@@ -1,0 +1,36 @@
+@page "/doctors"
+@using HealthApp.Domain.Models
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+
+<h3>Doctors</h3>
+
+<button @onclick="AddDoctor">Add Doctor</button>
+
+<table>
+    <thead>
+    <tr>
+        <th>Id</th>
+        <th>Full Name</th>
+        <th>Specialty</th>
+        <th>Email</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var doctor in doctors)
+    {
+        <tr>
+            <td>@doctor.Id</td>
+            <td>@doctor.FullName</td>
+            <td>@doctor.Specialty</td>
+            <td>@doctor.Email</td>
+            <td>
+                <button @onclick="() => EditDoctor(doctor.Id)">Edit</button>
+                <button @onclick="() => DeleteDoctor(doctor.Id)">Delete</button>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

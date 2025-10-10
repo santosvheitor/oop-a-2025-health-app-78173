@@ -6,14 +6,13 @@ public static class SeedData
 {
     public static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
     {
-        var roles = new[] { "Admin", "Doctor", "Patient" };
+        if (!await roleManager.RoleExistsAsync("Admin"))
+            await roleManager.CreateAsync(new IdentityRole("Admin"));
 
-        foreach (var role in roles)
-        {
-            if (!await roleManager.RoleExistsAsync(role))
-            {
-                await roleManager.CreateAsync(new IdentityRole(role));
-            }
-        }
+        if (!await roleManager.RoleExistsAsync("Doctor"))
+            await roleManager.CreateAsync(new IdentityRole("Doctor"));
+
+        if (!await roleManager.RoleExistsAsync("Patient"))
+            await roleManager.CreateAsync(new IdentityRole("Patient"));
     }
 }

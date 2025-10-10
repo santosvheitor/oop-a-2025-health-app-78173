@@ -8,8 +8,10 @@ public class HospitalContextFactory : IDesignTimeDbContextFactory<HospitalContex
     public HospitalContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<HospitalContext>();
-        optionsBuilder.UseSqlServer("Server=localhost,1433;Database=FinalHospitalDB;User Id=SA;Password=MyStrongPass123;TrustServerCertificate=True;");
+        optionsBuilder.UseSqlServer("Server=localhost,1433;Database=FinalHospital_HospitalDB;User Id=SA;Password=MyStrongPass123;TrustServerCertificate=True;");
 
         return new HospitalContext(optionsBuilder.Options);
     }
 }
+
+

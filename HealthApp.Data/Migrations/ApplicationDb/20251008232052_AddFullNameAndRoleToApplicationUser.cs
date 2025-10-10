@@ -3,14 +3,28 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace HealthApp.Data.Migrations
+namespace HealthApp.Data.Migrations.ApplicationDb
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class AddFullNameAndRoleToApplicationUser : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<string>(
+                name: "FullName",
+                table: "AspNetUsers",
+                type: "nvarchar(max)",
+                nullable: false,
+                defaultValue: "");
+
+            migrationBuilder.AddColumn<string>(
+                name: "Role",
+                table: "AspNetUsers",
+                type: "nvarchar(max)",
+                nullable: false,
+                defaultValue: "");
+
             migrationBuilder.CreateTable(
                 name: "Doctors",
                 columns: table => new
@@ -18,7 +32,8 @@ namespace HealthApp.Data.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Specialty = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Specialty = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -90,6 +105,14 @@ namespace HealthApp.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "Patients");
+
+            migrationBuilder.DropColumn(
+                name: "FullName",
+                table: "AspNetUsers");
+
+            migrationBuilder.DropColumn(
+                name: "Role",
+                table: "AspNetUsers");
         }
     }
 }

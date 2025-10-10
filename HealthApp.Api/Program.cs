@@ -1,46 +1,78 @@
+using HealthApp.Api.Models;
 using HealthApp.Api.Seed;
 using HealthApp.Data.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Connection String 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// ============================================================
+// 🔹 Connection Strings — agora separadas
+// (defina essas duas no seu appsettings.json)
+var identityConnection = builder.Configuration.GetConnectionString("IdentityConnection");
+var hospitalConnection = builder.Configuration.GetConnectionString("HospitalConnection");
 
-// Domain context (hospital)
-builder.Services.AddDbContext<HospitalContext>(options =>
-    options.UseSqlServer(connectionString));
-
-// Authentication context (Identity)
+// ============================================================
+// 🔹 Contextos do EF Core
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(identityConnection));
 
-// Identity Configuration
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>() 
+builder.Services.AddDbContext<HospitalContext>(options =>
+    options.UseSqlServer(hospitalConnection));
+
+// ============================================================
+// 🔹 Configuração de Identity (autenticação)
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// API configuration 
+// ============================================================
+// 🔹 Configuração de autenticação via JWT
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+});
+
+// ============================================================
+// 🔹 Configuração geral da API
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 🔹 CORS – Allows Blazor to access the API
+// 🔹 CORS – permite o Blazor acessar a API
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins, policy =>
     {
         policy.WithOrigins("http://localhost:5079")
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
 var app = builder.Build();
 
-// Pipeline HTTP
+// ============================================================
+// 🔹 Pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -55,7 +87,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// 🔹 Allows Blazor to access the API 
+// ============================================================
+// 🔹 Criação dos papéis (roles) no Identity ao iniciar
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();

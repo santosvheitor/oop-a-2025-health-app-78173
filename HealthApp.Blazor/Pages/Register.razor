@@ -1,0 +1,59 @@
+@page "/register"
+@using HealthApp.Blazor.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h3>Register</h3>
+
+<EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Full Name:</label>
+        <InputText @bind-Value="registerModel.FullName" />
+    </div>
+
+    <div>
+        <label>Email:</label>
+        <InputText @bind-Value="registerModel.Email" />
+    </div>
+
+    <div>
+        <label>Password:</label>
+        <InputText @bind-Value="registerModel.Password" type="password" />
+    </div>
+
+    <div>
+        <label>Role:</label>
+        <select @bind="registerModel.Role">
+            <option value="Patient">Patient</option>
+            <option value="Doctor">Doctor</option>
+            <option value="Admin">Admin</option>
+        </select>
+    </div>
+
+    <button type="submit">Register</button>
+</EditForm>
+
+<p>@message</p>
+
+@code {
+    private RegisterModel registerModel = new();
+    private string message = "";
+
+    private async Task HandleRegister()
+    {
+        var response = await Http.PostAsJsonAsync("api/account/register", registerModel);
+        if (response.IsSuccessStatusCode)
+        {
+            message = "Registration successful!";
+            NavigationManager.NavigateTo("/login");
+        }
+        else
+        {
+            var errors = await response.Content.ReadFromJsonAsync<List<string>>();
+            message = string.Join(", ", errors ?? new List<string> { "Registration failed." });
+        }
+    }
+}

@@ -1,4 +1,5 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using HealthApp.Blazor.Auth
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">HealthApp.Blazor</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -9,39 +10,66 @@
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="patients">
-                <span class="oi oi-people" aria-hidden="true"></span> Patients
-            </NavLink>
-        </li>
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="doctors">
-                <span class="oi oi-person" aria-hidden="true"></span> Doctors
-            </NavLink>
-        </li>
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="appointments">
-                <span class="oi oi-calendar" aria-hidden="true"></span> Appointments
-            </NavLink>
-        </li>
 
-    </nav>
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+        </NavLink>
+    </div>
+
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="counter">
+            <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+        </NavLink>
+    </div>
+
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="weather">
+            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+        </NavLink>
+    </div>
+
+    <!-- 👇 AQUI ENTRA O CONTROLE DE LOGIN/AUTORIZAÇÃO -->
+    <AuthorizeView>
+        <Authorized>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="patients">
+                    <span class="oi oi-people" aria-hidden="true"></span> Patients
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="doctors">
+                    <span class="oi oi-person" aria-hidden="true"></span> Doctors
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="appointments">
+                    <span class="oi oi-calendar" aria-hidden="true"></span> Appointments
+                </NavLink>
+            </div>
+        </Authorized>
+
+        <NotAuthorized>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="login">
+                    <span class="oi oi-account-login" aria-hidden="true"></span> Login
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="register">
+                    <span class="oi oi-person" aria-hidden="true"></span> Register
+                </NavLink>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+
+</nav>
+    
 </div>
+
+@inject IJSRuntime JS
+@inject CustomAuthStateProvider AuthProvider
+@inject NavigationManager Nav
 
 @code {
     private bool collapseNavMenu = true;
@@ -53,4 +81,10 @@
         collapseNavMenu = !collapseNavMenu;
     }
 
+    private async Task Logout()
+    {
+        await JS.InvokeVoidAsync("localStorage.removeItem", "authToken");
+        AuthProvider.NotifyUserLogout();
+        Nav.NavigateTo("/login");
+    }
 }

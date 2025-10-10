@@ -1,0 +1,58 @@
+@page "/login"
+@using HealthApp.Blazor.Auth
+@using HealthApp.Blazor.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h3>Login</h3>
+
+<EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Email:</label>
+        <InputText @bind-Value="loginModel.Email" />
+    </div>
+
+    <div>
+        <label>Password:</label>
+        <InputText @bind-Value="loginModel.Password" type="password" />
+    </div>
+
+    <button type="submit">Login</button>
+</EditForm>
+
+<p>@message</p>
+
+@code {
+    private LoginModel loginModel = new();
+    private string message = "";
+
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    [Inject] private CustomAuthStateProvider AuthStateProvider { get; set; } = default!;
+
+    private async Task HandleLogin()
+    {
+        var response = await Http.PostAsJsonAsync("api/account/login", loginModel);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+            if (result != null && result.ContainsKey("token"))
+            {
+                var token = result["token"];
+
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", token);
+                AuthStateProvider.NotifyUserAuthentication(token);
+
+                message = "Login successful!";
+                NavigationManager.NavigateTo("/");
+            }
+        }
+        else
+        {
+            message = "Login failed. Check your email and password.";
+        }
+    }
+}
