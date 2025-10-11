@@ -1,0 +1,79 @@
+@page "/medicalrecords"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<h3>Medical Records</h3>
+
+@if (records == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Patient</th>
+                <th>Diagnosis</th>
+                <th>Treatment</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var record in records)
+            {
+                <tr>
+                    <td>@record.Patient?.FullName</td>
+                    <td>@record.Diagnosis</td>
+                    <td>@record.Treatment</td>
+                    <td>@record.RecordDate.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick="() => EditRecord(record.Id)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteRecord(record.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <button class="btn btn-success" @onclick="AddRecord">Add Medical Record</button>
+}
+
+@code {
+    private List<MedicalRecord>? records;
+
+    protected override async Task OnInitializedAsync()
+    {
+        records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords");
+    }
+
+    private void AddRecord() => Navigation.NavigateTo("/medicalrecords/add");
+    private void EditRecord(int id) => Navigation.NavigateTo($"/medicalrecords/edit/{id}");
+
+    private async Task DeleteRecord(int id)
+    {
+        var confirm = await JS.InvokeAsync<bool>("confirm", "Do you really want to delete?");
+        if (confirm)
+        {
+            await Http.DeleteAsync($"api/medicalrecords/{id}");
+            records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords");
+        }
+    }
+
+    private class MedicalRecord
+    {
+        public int Id { get; set; }
+        public string Diagnosis { get; set; } = string.Empty;
+        public string Treatment { get; set; } = string.Empty;
+        public DateTime RecordDate { get; set; }
+        public Patient? Patient { get; set; }
+    }
+
+    private class Patient
+    {
+        public int Id { get; set; }
+        public string FullName { get; set; } = string.Empty;
+    }
+}

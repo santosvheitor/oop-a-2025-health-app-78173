@@ -1,21 +1,30 @@
 using HealthApp.Domain.Models;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
 
-namespace HealthApp.Blazor.Pages;
-
-public partial class DoctorsAdd
+namespace HealthApp.Blazor.Pages
 {
-    [Inject] private HttpClient Http { get; set; } = default!;
-    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
-
-    private Doctor doctor = new();
-
-    private async Task HandleValidSubmit()
+    public partial class DoctorsAdd : ComponentBase
     {
-        await Http.PostAsJsonAsync("api/doctor", doctor);
-        NavigationManager.NavigateTo("/doctors");
-    }
+        [Inject] private HttpClient Http { get; set; } = default!;
+        [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+        [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
-    private void Cancel() => NavigationManager.NavigateTo("/doctors");
+        private Doctor doctor = new();
+        private bool userIsAdmin;
+
+        protected override async Task OnInitializedAsync()
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            userIsAdmin = authState.User.IsInRole("Admin");
+        }
+
+        private async Task HandleValidSubmit()
+        {
+            await Http.PostAsJsonAsync("api/doctors", doctor); // <-- plural
+            NavigationManager.NavigateTo("/doctors");
+        }
+
+    }
 }

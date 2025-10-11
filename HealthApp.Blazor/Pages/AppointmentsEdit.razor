@@ -1,0 +1,52 @@
+@page "/appointments/edit/{Id:int}"
+@using HealthApp.Domain.Models
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles="Admin")]
+
+<h3>Edit Appointment</h3>
+
+@if (!userIsAdmin)
+{
+    <p>You are not authorized to view this page.</p>
+}
+else if (appointment == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@appointment" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div>
+            <label>Date:</label>
+            <InputDate @bind-Value="appointment.Date" />
+        </div>
+        <div>
+            <label>Patient:</label>
+            <select @bind="appointment.PatientId">
+                @foreach (var patient in patients)
+                {
+                    <option value="@patient.Id">@patient.FullName</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label>Doctor:</label>
+            <select @bind="appointment.DoctorId">
+                @foreach (var doctor in doctors)
+                {
+                    <option value="@doctor.Id">@doctor.FullName</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label>Status:</label>
+            <InputText @bind-Value="appointment.Status" />
+        </div>
+
+        <button type="submit">Save</button>
+    </EditForm>
+}

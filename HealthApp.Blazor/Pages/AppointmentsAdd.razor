@@ -1,46 +1,44 @@
 @page "/appointments/add"
-@using Microsoft.AspNetCore.Authorization
-@attribute [Authorize]
-
+@using HealthApp.Domain.Models
 
 <h3>Add Appointment</h3>
 
-<EditForm Model="@appointment" OnValidSubmit="HandleValidSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+@if (appointment != null)
+{
+    <EditForm Model="@appointment" OnValidSubmit="HandleAddAppointment">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-    <div>
-        <label>Patient:</label>
-        <select @bind="appointment.PatientId">
-            <option value="">Select Patient</option>
-            @foreach (var p in patients)
-            {
-                <option value="@p.Id">@p.FullName</option>
-            }
-        </select>
-    </div>
+        <div class="mb-3">
+            <label>Patient:</label>
+            <InputText @bind-Value="patientFullName" Disabled="true" class="form-control" />
+        </div>
 
-    <div>
-        <label>Doctor:</label>
-        <select @bind="appointment.DoctorId">
-            <option value="">Select Doctor</option>
-            @foreach (var d in doctors)
-            {
-                <option value="@d.Id">@d.FullName</option>
-            }
-        </select>
-    </div>
+        <div class="mb-3">
+            <label>Doctor:</label>
+            <select @bind="appointment.DoctorId" class="form-control">
+                <option value="">Select Doctor</option>
+                @foreach (var doctor in doctors)
+                {
+                    <option value="@doctor.Id">@doctor.FullName</option>
+                }
+            </select>
+        </div>
 
-    <div>
-        <label>Date:</label>
-        <InputDate @bind-Value="appointment.Date" />
-    </div>
+        <div class="mb-3">
+            <label>Date:</label>
+            <InputDate @bind-Value="appointment.Date" class="form-control" />
+        </div>
 
-    <div>
-        <label>Status:</label>
-        <InputText @bind-Value="appointment.Status" />
-    </div>
+        <div class="mb-3">
+            <label>Notes:</label>
+            <InputTextArea @bind-Value="appointment.Notes" class="form-control" />
+        </div>
 
-    <button type="submit">Add</button>
-    <button type="button" @onclick="Cancel">Cancel</button>
-</EditForm>
+        <button type="submit" class="btn btn-primary">Add</button>
+    </EditForm>
+}
+else
+{
+    <p>Loading...</p>
+}

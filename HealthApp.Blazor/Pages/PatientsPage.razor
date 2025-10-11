@@ -1,39 +1,47 @@
 @page "/patients"
+@using HealthApp.Domain.Models
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Authorization
+
+@attribute [Authorize(Roles="Admin")]
 
 <h3>Patients</h3>
 
-@if (patients == null)
+@if (userIsAdmin)
 {
-    <p><em>Loading...</em></p>
+    <button @onclick="AddPatient">Add Patient</button>
 }
-else
-{
-    <table class="table">
-        <thead>
-        <tr>
-            <th>Id</th>
-            <th>Full Name</th>
-            <th>Email</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var p in patients)
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Id</th>
+        <th>Full Name</th>
+        <th>Email</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    @if (patients != null && patients.Any())
+    {
+        foreach (var patient in patients)
         {
             <tr>
-                <td>@p.Id</td>
-                <td>@p.FullName</td>
-                <td>@p.Email</td>
+                <td>@patient.Id</td>
+                <td>@patient.FullName</td>
+                <td>@patient.Email</td>
                 <td>
-                    <button class="btn btn-primary" @onclick="() => EditPatient(p.Id)">Edit</button>
-                    <button class="btn btn-danger" @onclick="() => DeletePatient(p.Id)">Delete</button>
+                    <button @onclick="() => EditPatient(patient.Id)">Edit</button>
+                    <button @onclick="() => DeletePatient(patient.Id)">Delete</button>
                 </td>
             </tr>
         }
-        </tbody>
-    </table>
-    
-    <button class="btn btn-success" @onclick="AddPatient">Add Patient</button>
-}
+    }
+    else
+    {
+        <tr>
+            <td colspan="4">No patients found.</td>
+        </tr>
+    }
+    </tbody>
+</table>

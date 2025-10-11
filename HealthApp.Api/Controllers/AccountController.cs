@@ -6,27 +6,32 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using HealthApp.Api.Models;
+using HealthApp.Domain.Models;
 
 namespace HealthApp.Api.Controllers;
 
-[Route("api/[controller]")]
 [ApiController]
+[Route("api/[controller]")]
 public class AccountController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IConfiguration _configuration;
+    private readonly HospitalContext _context;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        HospitalContext context) 
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _configuration = configuration;
+        _context = context; 
     }
 
+   
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterModel model)
     {
@@ -34,7 +39,8 @@ public class AccountController : ControllerBase
         {
             UserName = model.Email,
             Email = model.Email,
-            FullName = model.FullName
+            FullName = model.FullName,
+            Role = model.Role
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
@@ -43,11 +49,36 @@ public class AccountController : ControllerBase
             return BadRequest(result.Errors);
         }
 
-        // Define o role do usuário (ex.: Patient)
+        // Define the user's role
         await _userManager.AddToRoleAsync(user, model.Role);
 
+        if (model.Role == "Doctor")
+        {
+            var doctor = new HealthApp.Data.Models.Doctor
+            {
+                FullName = model.FullName,
+                Email = model.Email,
+                IdentityUserId = user.Id,
+                Specialty = model.Specialty
+            };
+            _context.Doctors.Add(doctor);
+        }
+        else if (model.Role == "Patient")
+        {
+            var patient = new HealthApp.Data.Models.Patient
+            {
+                FullName = model.FullName,
+                Email = model.Email,
+                IdentityUserId = user.Id
+            };
+            _context.Patients.Add(patient);
+        }
+
+        await _context.SaveChangesAsync();
+        
         return Ok("User registered successfully!");
     }
+
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginModel model)
@@ -58,7 +89,7 @@ public class AccountController : ControllerBase
         var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
         if (!result.Succeeded) return Unauthorized();
 
-        // Pega roles do usuário
+        // Get the user's roles
         var roles = await _userManager.GetRolesAsync(user);
 
         var claims = new List<Claim>

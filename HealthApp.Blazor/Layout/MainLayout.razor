@@ -1,12 +1,28 @@
 ﻿@inherits LayoutComponentBase
+@inject CustomAuthStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@using HealthApp.Blazor.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+
+
 <div class="page">
     <div class="sidebar">
         <NavMenu/>
     </div>
 
     <main>
-        <div class="top-row px-4">
+        <div class="top-row px-4 d-flex justify-content-between align-items-center">
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+
+            @if (isLoggedIn)
+            {
+                <button class="btn btn-danger" @onclick="Logout">Logout</button>
+            }
+            else
+            {
+                <a href="/login">Login</a>
+            }
         </div>
 
         <article class="content px-4">
@@ -14,3 +30,33 @@
         </article>
     </main>
 </div>
+
+@code {
+    private bool isLoggedIn;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        isLoggedIn = authState.User.Identity?.IsAuthenticated ?? false;
+
+        // Atualiza sempre que o login/logout mudar
+        AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
+    }
+
+    private void OnAuthStateChanged(Task<AuthenticationState> task)
+    {
+        InvokeAsync(async () =>
+        {
+            var authState = await task;
+            isLoggedIn = authState.User.Identity?.IsAuthenticated ?? false;
+            StateHasChanged();
+        });
+    }
+
+    private async Task Logout()
+    {
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+        AuthStateProvider.NotifyUserLogout();
+        NavigationManager.NavigateTo("/login");
+    }
+}

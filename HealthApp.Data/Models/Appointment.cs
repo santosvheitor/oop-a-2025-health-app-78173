@@ -10,12 +10,13 @@ public class Appointment
     public DateTime Date { get; set; }
 
     public string? Notes { get; set; }
+    public string Status { get; set; } = "Pending";
 
     [ForeignKey("Doctor")]
     public int DoctorId { get; set; }
-    public Doctor Doctor { get; set; }
+    public Doctor? Doctor { get; set; }
 
     [ForeignKey("Patient")]
     public int PatientId { get; set; }
-    public Patient Patient { get; set; }
+    public Patient? Patient { get; set; }
 }

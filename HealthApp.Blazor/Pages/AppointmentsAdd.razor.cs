@@ -1,33 +1,63 @@
+using HealthApp.Domain.Models;
 using Microsoft.AspNetCore.Components;
 using System.Net.Http.Json;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace HealthApp.Blazor.Pages
 {
-    public partial class AppointmentsAdd
+    public partial class AppointmentsAdd : ComponentBase
     {
         [Inject] private HttpClient Http { get; set; } = default!;
         [Inject] private NavigationManager NavigationManager { get; set; } = default!;
 
-        // Usando os tipos do Domain explicitamente para evitar conflito
-        private HealthApp.Domain.Models.Appointment appointment = new();
-        private List<HealthApp.Domain.Models.Patient> patients = new();
-        private List<HealthApp.Domain.Models.Doctor> doctors = new();
+        private Appointment appointment = new();
+        private List<Doctor> doctors = new();
+        private string patientFullName = "";
 
         protected override async Task OnInitializedAsync()
         {
-            // Carrega os pacientes e médicos usando namespace completo
-            patients = await Http.GetFromJsonAsync<List<HealthApp.Domain.Models.Patient>>("api/patient") ?? new List<HealthApp.Domain.Models.Patient>();
-            doctors = await Http.GetFromJsonAsync<List<HealthApp.Domain.Models.Doctor>>("api/doctor") ?? new List<HealthApp.Domain.Models.Doctor>();
+            try
+            {
+                // Load Doctors list
+                doctors = await Http.GetFromJsonAsync<List<Doctor>>("api/doctors") ?? new List<Doctor>();
+
+                // Initialize logged in patient
+               
+                patientFullName = "Logged Patient"; 
+                appointment.PatientId = 1; // Set the PatientId of the logged in patient
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"Error loading data: {ex.Message}");
+            }
         }
 
-        private async Task HandleValidSubmit()
+        private async Task HandleAddAppointment()
         {
-            await Http.PostAsJsonAsync("api/appointment", appointment);
-            NavigationManager.NavigateTo("/appointments");
-        }
+            appointment.Status = "Pending";
 
-        private void Cancel() => NavigationManager.NavigateTo("/appointments");
+            if (appointment.PatientId == 0 || appointment.DoctorId == 0 || appointment.Date == default)
+            {
+                Console.WriteLine("Error: Fill in all required fields.");
+                return;
+            }
+
+            try
+            {
+                var response = await Http.PostAsJsonAsync("api/appointments", appointment);
+                if (response.IsSuccessStatusCode)
+                {
+                    NavigationManager.NavigateTo("/appointments");
+                }
+                else
+                {
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error adding appointment: {errorMsg}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding appointment: {ex.Message}");
+            }
+        }
     }
 }

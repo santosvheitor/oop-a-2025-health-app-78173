@@ -9,28 +9,32 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
-// 🔹 Connection Strings — agora separadas
-// (defina essas duas no seu appsettings.json)
+
+// 🔹 Connection Strings 
 var identityConnection = builder.Configuration.GetConnectionString("IdentityConnection");
 var hospitalConnection = builder.Configuration.GetConnectionString("HospitalConnection");
 
-// ============================================================
-// 🔹 Contextos do EF Core
+
+// Authentication context (Identity)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(identityConnection));
 
+// Hospital data context
+// so migrations for this context are created in the API project
 builder.Services.AddDbContext<HospitalContext>(options =>
-    options.UseSqlServer(hospitalConnection));
+    options.UseSqlServer(
+        hospitalConnection,
+        b => b.MigrationsAssembly("HealthApp.Api")
+    ));
 
 // ============================================================
-// 🔹 Configuração de Identity (autenticação)
+// Identity configuration (authentication)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
 // ============================================================
-// 🔹 Configuração de autenticação via JWT
+// JWT authentication configuration
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -52,20 +56,21 @@ builder.Services.AddAuthentication(options =>
 });
 
 // ============================================================
-// 🔹 Configuração geral da API
+// General API configuration
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 🔹 CORS – permite o Blazor acessar a API
+// CORS – allows Blazor to access the API
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins, policy =>
     {
-        policy.WithOrigins("http://localhost:5079")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy.WithOrigins("http://localhost:5079", "https://localhost:5079")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -88,7 +93,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // ============================================================
-// 🔹 Criação dos papéis (roles) no Identity ao iniciar
+// Creation of roles in Identity on startup
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();

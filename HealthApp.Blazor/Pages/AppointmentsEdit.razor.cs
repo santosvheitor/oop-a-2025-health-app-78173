@@ -5,14 +5,16 @@ using System.Net.Http.Json;
 
 namespace HealthApp.Blazor.Pages
 {
-    public partial class DoctorsEdit : ComponentBase
+    public partial class AppointmentsEdit : ComponentBase
     {
         [Parameter] public int Id { get; set; }
         [Inject] private HttpClient Http { get; set; } = default!;
         [Inject] private NavigationManager NavigationManager { get; set; } = default!;
         [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
-        private Doctor doctor = new();
+        private Appointment appointment = new();
+        private List<Patient> patients = new();
+        private List<Doctor> doctors = new();
         private bool userIsAdmin;
 
         protected override async Task OnInitializedAsync()
@@ -21,13 +23,17 @@ namespace HealthApp.Blazor.Pages
             userIsAdmin = authState.User.IsInRole("Admin");
 
             if (userIsAdmin)
-                doctor = await Http.GetFromJsonAsync<Doctor>($"api/doctor/{Id}");
+            {
+                appointment = await Http.GetFromJsonAsync<Appointment>($"api/appointment/{Id}");
+                patients = await Http.GetFromJsonAsync<List<Patient>>("api/patient");
+                doctors = await Http.GetFromJsonAsync<List<Doctor>>("api/doctor");
+            }
         }
 
         private async Task HandleValidSubmit()
         {
-            await Http.PutAsJsonAsync($"api/doctor/{Id}", doctor);
-            NavigationManager.NavigateTo("/doctors");
+            await Http.PutAsJsonAsync($"api/appointment/{Id}", appointment);
+            NavigationManager.NavigateTo("/appointments");
         }
     }
 }

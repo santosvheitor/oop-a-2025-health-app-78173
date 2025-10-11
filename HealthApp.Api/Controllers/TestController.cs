@@ -9,6 +9,6 @@ public class TestController : ControllerBase
     [HttpGet]
     public IActionResult Get()
     {
-        return Ok(new { message = "API funcionando corretamente!" });
+        return Ok(new { message = "API working well!" });
     }
 }

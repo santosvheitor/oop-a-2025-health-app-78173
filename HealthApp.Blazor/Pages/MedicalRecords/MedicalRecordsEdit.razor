@@ -1,0 +1,58 @@
+@page "/medicalrecords/edit/{Id:int}"
+@using HealthApp.Data.Models
+@inject NavigationManager NavigationManager
+
+<h3>Edit Medical Record</h3>
+
+<EditForm Model="record" OnValidSubmit="SaveRegister">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Diagnosis:</label>
+        <InputText class="form-control" @bind-Value="record.Diagnosis" />
+    </div>
+
+    <div class="mb-3">
+        <label>Treatment:</label>
+        <InputText class="form-control" @bind-Value="record.Treatment" />
+    </div>
+
+    <div class="mb-3">
+        <label>Registration Date:</label>
+        <InputDate class="form-control" @bind-Value="record.RecordDate" />
+    </div>
+
+    <div class="mb-3">
+        <label>Patient:</label>
+        <InputNumber class="form-control" @bind-Value="record.PatientId" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private MedicalRecord record = new MedicalRecord();
+
+    protected override void OnInitialized()
+    {
+        // Here you would load the database record by Id
+        // Example:
+        // record = dbContext.MedicalRecords.FirstOrDefault(r => r.Id == Id);
+    }
+
+    private void SaveRegister()
+    {
+        // Logic for saving changes to the database
+        NavigationManager.NavigateTo("/medicalrecords");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/medicalrecords");
+    }
+}

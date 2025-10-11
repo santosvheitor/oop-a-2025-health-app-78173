@@ -10,18 +10,19 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// AutoMapper (caso precise)
+//AutoMapper 
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// JWT Auth
+// Adds support for JWT authentication and authorization
+builder.Services.AddOptions();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<CustomAuthStateProvider>());
 
-// HttpClient base
+// Configures HttpClient to point to your API 
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri("http://localhost:5101/") // my API
+    BaseAddress = new Uri("http://localhost:5101") // URL da API .NET
 });
 
 await builder.Build().RunAsync();

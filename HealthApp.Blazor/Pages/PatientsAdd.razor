@@ -1,55 +1,29 @@
 @page "/patients/add"
 @using HealthApp.Domain.Models
-@inject HttpClient Http
-@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles="Admin")]
 
 <h3>Add Patient</h3>
 
-<div class="card p-4 mt-3" style="max-width: 400px;">
-    <EditForm Model="patient" OnValidSubmit="HandleValidSubmit">
+@if (!userIsAdmin)
+{
+    <p>You are not authorized to view this page.</p>
+}
+else
+{
+    <EditForm Model="@patient" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
-        <div class="mb-3">
-            <label>Full Name</label>
-            <InputText class="form-control" @bind-Value="patient.FullName" />
+        <div>
+            <label>Full Name:</label>
+            <InputText @bind-Value="patient.FullName" />
+        </div>
+        <div>
+            <label>Email:</label>
+            <InputText @bind-Value="patient.Email" type="email" />
         </div>
 
-        <div class="mb-3">
-            <label>Email</label>
-            <InputText class="form-control" @bind-Value="patient.Email" />
-        </div>
-
-        <div class="mb-3">
-            <label>Password</label>
-            <InputText type="password" class="form-control" @bind-Value="patient.PasswordHash" />
-        </div>
-
-        <button class="btn btn-primary" type="submit">Save</button>
-        <button class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+        <button type="submit">Save</button>
     </EditForm>
-</div>
-
-@code {
-    private PatientModel patient = new();
-
-    private async Task HandleValidSubmit()
-    {
-        var response = await Http.PostAsJsonAsync("api/patient", patient);
-
-        if (response.IsSuccessStatusCode)
-        {
-            // volta para a lista
-            NavigationManager.NavigateTo("/patients");
-        }
-        else
-        {
-            Console.WriteLine("❌ Error creating patient");
-        }
-    }
-
-    private void Cancel()
-    {
-        NavigationManager.NavigateTo("/patients");
-    }
 }

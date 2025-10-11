@@ -1,25 +1,33 @@
 @page "/doctors/add"
-
+@using HealthApp.Domain.Models
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles="Admin")]
 
 <h3>Add Doctor</h3>
 
-<EditForm Model="@doctor" OnValidSubmit="HandleValidSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+@if (!userIsAdmin)
+{
+    <p>You are not authorized to view this page.</p>
+}
+else
+{
+    <EditForm Model="@doctor" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-    <div>
-        <label>Full Name:</label>
-        <InputText @bind-Value="doctor.FullName" />
-    </div>
-    <div>
-        <label>Specialty:</label>
-        <InputText @bind-Value="doctor.Specialty" />
-    </div>
-    <div>
-        <label>Email:</label>
-        <InputText @bind-Value="doctor.Email" />
-    </div>
+        <div>
+            <label>Full Name:</label>
+            <InputText @bind-Value="doctor.FullName" />
+        </div>
+        <div>
+            <label>Email:</label>
+            <InputText @bind-Value="doctor.Email" type="email" />
+        </div>
+        <div>
+            <label>Specialty:</label>
+            <InputText @bind-Value="doctor.Specialty" />
+        </div>
 
-    <button type="submit">Add</button>
-    <button type="button" @onclick="Cancel">Cancel</button>
-</EditForm>
+        <button type="submit">Save</button>
+    </EditForm>
+}

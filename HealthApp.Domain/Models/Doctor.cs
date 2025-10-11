@@ -6,4 +6,5 @@ public class Doctor
     public string FullName { get; set; } = string.Empty;
     public string Specialty { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string? IdentityUserId { get; set; } 
 }

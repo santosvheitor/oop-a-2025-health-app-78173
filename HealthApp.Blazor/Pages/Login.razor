@@ -3,6 +3,8 @@
 @using HealthApp.Blazor.Models
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject CustomAuthStateProvider AuthStateProvider
 
 <h3>Login</h3>
 
@@ -29,8 +31,17 @@
     private LoginModel loginModel = new();
     private string message = "";
 
-    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
-    [Inject] private CustomAuthStateProvider AuthStateProvider { get; set; } = default!;
+    protected override async Task OnInitializedAsync()
+    {
+        // Checa se já existe token no localStorage
+        var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+        if (!string.IsNullOrEmpty(token))
+        {
+            // Usuário já está logado, redireciona para a home
+            Console.WriteLine("Usuário já logado, redirecionando...");
+            NavigationManager.NavigateTo("/");
+        }
+    }
 
     private async Task HandleLogin()
     {
@@ -43,7 +54,10 @@
             {
                 var token = result["token"];
 
+                //Save token in localStorage
                 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", token);
+                
+                //Notify AuthStateProvider about authentication
                 AuthStateProvider.NotifyUserAuthentication(token);
 
                 message = "Login successful!";

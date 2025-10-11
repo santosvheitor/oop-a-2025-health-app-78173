@@ -21,17 +21,26 @@
 
     <div>
         <label>Password:</label>
-        <InputText @bind-Value="registerModel.Password" type="password" />
+        <InputText @bind-Value="registerModel.Password" type="password" /> 
     </div>
 
     <div>
         <label>Role:</label>
-        <select @bind="registerModel.Role">
+        <InputSelect @bind-Value="registerModel.Role">
+            <option value="">Select a role</option>
             <option value="Patient">Patient</option>
             <option value="Doctor">Doctor</option>
             <option value="Admin">Admin</option>
-        </select>
+        </InputSelect>
     </div>
+
+    @if (registerModel.Role == "Doctor")
+    {
+        <div>
+            <label>Specialty:</label>
+            <InputText @bind-Value="registerModel.Specialty" placeholder="Specialty" />
+        </div>
+    }
 
     <button type="submit">Register</button>
 </EditForm>
@@ -45,6 +54,7 @@
     private async Task HandleRegister()
     {
         var response = await Http.PostAsJsonAsync("api/account/register", registerModel);
+
         if (response.IsSuccessStatusCode)
         {
             message = "Registration successful!";
@@ -52,8 +62,8 @@
         }
         else
         {
-            var errors = await response.Content.ReadFromJsonAsync<List<string>>();
-            message = string.Join(", ", errors ?? new List<string> { "Registration failed." });
+            var errorResponse = await response.Content.ReadAsStringAsync();
+            message = $"Registration failed: {errorResponse}";
         }
     }
 }

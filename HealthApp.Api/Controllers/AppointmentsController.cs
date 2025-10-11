@@ -48,11 +48,15 @@ public class AppointmentsController : ControllerBase
         if (appointment.DoctorId <= 0 || appointment.PatientId <= 0)
             return BadRequest("DoctorId and PatientId are required.");
 
+        appointment.Status ??= "Pending"; // default if not sent
+
         _context.Appointments.Add(appointment);
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetAppointment), new { id = appointment.Id }, appointment);
     }
+
+
 
     // PUT: api/appointments/{id}
     [HttpPut("{id}")]
@@ -78,4 +82,18 @@ public class AppointmentsController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+    
+    [HttpPatch("{id}/confirm")]
+    public async Task<IActionResult> ConfirmAppointment(int id)
+    {
+        var appointment = await _context.Appointments.FindAsync(id);
+        if (appointment == null)
+            return NotFound();
+
+        appointment.Status = "Confirmed";
+        await _context.SaveChangesAsync();
+
+        return Ok(appointment);
+    }
+
 }

@@ -1,0 +1,48 @@
+@page "/medicalrecords/add"
+@using HealthApp.Data.Models
+@inject NavigationManager NavigationManager
+
+<h3>Add Medical Record</h3>
+
+<EditForm Model="record" OnValidSubmit="SaveRegister">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Diagnostic:</label>
+        <InputText class="form-control" @bind-Value="record.Diagnosis" />
+    </div>
+
+    <div class="mb-3">
+        <label>Treatment:</label>
+        <InputText class="form-control" @bind-Value="record.Treatment" />
+    </div>
+
+    <div class="mb-3">
+        <label>Registration Date:</label>
+        <InputDate class="form-control" @bind-Value="record.RecordDate" />
+    </div>
+
+    <div class="mb-3">
+        <label>Patient:</label>
+        <InputNumber class="form-control" @bind-Value="record.PatientId" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+</EditForm>
+
+@code {
+    private MedicalRecord record = new MedicalRecord();
+
+    private void SaveRegister()
+    {
+        // Logic to save the record in the database
+        NavigationManager.NavigateTo("/medicalrecords");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/medicalrecords");
+    }
+}
