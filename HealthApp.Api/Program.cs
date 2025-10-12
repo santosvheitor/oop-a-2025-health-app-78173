@@ -6,35 +6,37 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 // 🔹 Connection Strings 
 var identityConnection = builder.Configuration.GetConnectionString("IdentityConnection");
 var hospitalConnection = builder.Configuration.GetConnectionString("HospitalConnection");
 
-
-// Authentication context (Identity)
+// 🔹 DbContexts
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(identityConnection));
 
-// Hospital data context
-// so migrations for this context are created in the API project
 builder.Services.AddDbContext<HospitalContext>(options =>
     options.UseSqlServer(
         hospitalConnection,
         b => b.MigrationsAssembly("HealthApp.Api")
     ));
 
-// ============================================================
-// Identity configuration (authentication)
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+// 🔹 Identity Configuration
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 6;
+    options.User.RequireUniqueEmail = true;
+})
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// ============================================================
-// JWT authentication configuration
+// 🔹 JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -55,17 +57,58 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// ============================================================
-// General API configuration
+// 🔹 Authorization
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("PatientPolicy", policy => policy.RequireRole("Patient"));
+    options.AddPolicy("DoctorPolicy", policy => policy.RequireRole("Doctor"));
+    options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
+});
+
+// 🔹 API & Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Swagger + JWT configuration
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "HealthApp API",
+        Version = "v1"
+    });
 
-// CORS – allows Blazor to access the API
+    // Adiciona o suporte ao botão Authorize (JWT)
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Insira o token JWT desta forma: Bearer {seu_token}"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// 🔹 CORS
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins, policy =>
+    options.AddPolicy(MyAllowSpecificOrigins, policy =>
     {
         policy.WithOrigins("http://localhost:5079", "https://localhost:5079")
             .AllowAnyHeader()
@@ -76,8 +119,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// ============================================================
-// 🔹 Pipeline HTTP
+// 🔹 HTTP Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -92,8 +134,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// ============================================================
-// Creation of roles in Identity on startup
+// 🔹 Seed default roles
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
