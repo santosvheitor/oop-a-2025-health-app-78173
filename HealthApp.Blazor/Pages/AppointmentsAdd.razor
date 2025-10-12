@@ -3,7 +3,11 @@
 
 <h3>Add Appointment</h3>
 
-@if (appointment != null)
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else
 {
     <EditForm Model="@appointment" OnValidSubmit="HandleAddAppointment">
         <DataAnnotationsValidator />
@@ -11,13 +15,14 @@
 
         <div class="mb-3">
             <label>Patient:</label>
-            <InputText @bind-Value="patientFullName" Disabled="true" class="form-control" />
+            <!-- Corrigido para @bind-Value para não gerar erro no InputText -->
+            <InputText class="form-control" @bind-Value="patientFullName" Disabled="true" />
         </div>
 
         <div class="mb-3">
             <label>Doctor:</label>
-            <select @bind="appointment.DoctorId" class="form-control">
-                <option value="">Select Doctor</option>
+            <select class="form-control" @bind="appointment.DoctorId">
+                <option value="0">Select Doctor</option>
                 @foreach (var doctor in doctors)
                 {
                     <option value="@doctor.Id">@doctor.FullName</option>
@@ -37,8 +42,4 @@
 
         <button type="submit" class="btn btn-primary">Add</button>
     </EditForm>
-}
-else
-{
-    <p>Loading...</p>
 }

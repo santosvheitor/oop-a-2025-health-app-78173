@@ -11,31 +11,64 @@ namespace HealthApp.Blazor.Pages
 
         private Appointment appointment = new();
         private List<Doctor> doctors = new();
-        private string patientFullName = "";
+        private string? patientFullName;
+        private int patientId;
+        private bool isLoading = true;
 
         protected override async Task OnInitializedAsync()
         {
             try
             {
-                // Load Doctors list
+                // Inicializa a data do agendamento para hoje
+                appointment.Date = DateTime.Today;
+
+                // Carrega a lista de médicos
                 doctors = await Http.GetFromJsonAsync<List<Doctor>>("api/doctors") ?? new List<Doctor>();
 
-                // Initialize logged in patient
-               
-                patientFullName = "Logged Patient"; 
-                appointment.PatientId = 1; // Set the PatientId of the logged in patient
+                // Carrega o paciente logado
+                var response = await Http.GetAsync("api/patients/me");
+                if (response.IsSuccessStatusCode)
+                {
+                    var patient = await response.Content.ReadFromJsonAsync<Patient>();
+                    if (patient != null)
+                    {
+                        patientFullName = patient.FullName;
+                        patientId = patient.Id;
+                        appointment.PatientId = patientId;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Patient not found.");
+                    }
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    Console.WriteLine("User is not authenticated.");
+                    NavigationManager.NavigateTo("/login");
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine($"Error loading patient: {response.StatusCode}");
+                }
             }
             catch (HttpRequestException ex)
             {
                 Console.WriteLine($"Error loading data: {ex.Message}");
+            }
+            finally
+            {
+                isLoading = false;
             }
         }
 
         private async Task HandleAddAppointment()
         {
             appointment.Status = "Pending";
+            appointment.PatientId = patientId;
 
-            if (appointment.PatientId == 0 || appointment.DoctorId == 0 || appointment.Date == default)
+            // Validação corrigida: agora considera DoctorId == 0 e Date default
+            if (appointment.PatientId == 0 || appointment.DoctorId == 0 || appointment.Date == default(DateTime))
             {
                 Console.WriteLine("Error: Fill in all required fields.");
                 return;
