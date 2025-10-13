@@ -19,17 +19,19 @@ public class PatientsController : ControllerBase
         _context = context;
     }
 
-    // GET: api/patients
+    // ✅ GET: api/patients
+    // Admin e Doctor podem listar pacientes
     [HttpGet]
-    [Authorize(Roles = "Admin")] // Apenas admins podem listar todos os pacientes
+    [Authorize(Roles = "Admin,Doctor")]
     public async Task<ActionResult<IEnumerable<Patient>>> GetPatients()
     {
         return await _context.Patients.ToListAsync();
     }
 
-    // GET: api/patients/{id}
+    // ✅ GET: api/patients/{id}
+    // Admins e Doctors podem acessar pacientes por ID
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,Doctor")] // Admins e Doctors podem acessar pacientes por ID
+    [Authorize(Roles = "Admin,Doctor")]
     public async Task<ActionResult<Patient>> GetPatient(int id)
     {
         var patient = await _context.Patients.FindAsync(id);
@@ -39,12 +41,12 @@ public class PatientsController : ControllerBase
         return patient;
     }
 
-    // GET: api/patients/me
+    // ✅ GET: api/patients/me
+    // Paciente autenticado vê seus próprios dados
     [HttpGet("me")]
     [Authorize(Roles = "Patient")]
     public async Task<ActionResult<Patient>> GetLoggedInPatient()
     {
-        // Aqui usamos o email do token para buscar o paciente
         var email = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(email))
             return Unauthorized("User is not authenticated.");
@@ -58,7 +60,7 @@ public class PatientsController : ControllerBase
         return patient;
     }
 
-    // GET: api/patients/debug
+    // 🔍 Endpoint de debug (opcional)
     [HttpGet("debug")]
     public ActionResult<string> DebugUser()
     {
@@ -67,9 +69,10 @@ public class PatientsController : ControllerBase
         return $"UserId: {identityUserId}, Role: {role}";
     }
 
-    // POST: api/patients
+    // 🟢 POST: api/patients
+    // Permite que novos pacientes se registrem
     [HttpPost]
-    [AllowAnonymous] // Permite que novos pacientes se registrem sem estar logado
+    [AllowAnonymous]
     public async Task<ActionResult<Patient>> PostPatient(Patient patient)
     {
         if (string.IsNullOrWhiteSpace(patient.FullName) || string.IsNullOrWhiteSpace(patient.Email))
@@ -85,7 +88,8 @@ public class PatientsController : ControllerBase
         return CreatedAtAction(nameof(GetPatient), new { id = patient.Id }, patient);
     }
 
-    // PUT: api/patients/{id}
+    // 🟡 PUT: api/patients/{id}
+    // Apenas Admin ou o próprio paciente podem editar
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin,Patient")]
     public async Task<IActionResult> PutPatient(int id, Patient patient)
@@ -98,7 +102,8 @@ public class PatientsController : ControllerBase
         return NoContent();
     }
 
-    // DELETE: api/patients/{id}
+    // 🔴 DELETE: api/patients/{id}
+    // Somente Admin pode deletar
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeletePatient(int id)
