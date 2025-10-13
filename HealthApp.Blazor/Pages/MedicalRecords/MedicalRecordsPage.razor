@@ -1,13 +1,19 @@
 @page "/medicalrecords"
+@using HealthApp.Data.Models
 @inject HttpClient Http
 @inject NavigationManager Navigation
-@inject IJSRuntime JS
 
 <h3>Medical Records</h3>
 
+<button class="btn btn-success mb-3" @onclick="AddRecord">Add New Record</button>
+
 @if (records == null)
 {
-    <p><em>Loading...</em></p>
+    <p>Loading...</p>
+}
+else if (!records.Any())
+{
+    <p>No records found.</p>
 }
 else
 {
@@ -22,58 +28,49 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var record in records)
+            @foreach (var r in records)
             {
                 <tr>
-                    <td>@record.Patient?.FullName</td>
-                    <td>@record.Diagnosis</td>
-                    <td>@record.Treatment</td>
-                    <td>@record.RecordDate.ToString("dd/MM/yyyy")</td>
+                    <td>@r.Patient.FullName</td>
+                    <td>@r.Diagnosis</td>
+                    <td>@r.Treatment</td>
+                    <td>@r.RecordDate.ToShortDateString()</td>
                     <td>
-                        <button class="btn btn-primary btn-sm" @onclick="() => EditRecord(record.Id)">Edit</button>
-                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteRecord(record.Id)">Delete</button>
+                        <button class="btn btn-primary btn-sm" @onclick="() => EditRecord(r.Id)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteRecord(r.Id)">Delete</button>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
-
-    <button class="btn btn-success" @onclick="AddRecord">Add Medical Record</button>
 }
 
 @code {
-    private List<MedicalRecord>? records;
+    public List<MedicalRecord> records { get; set; } = new List<MedicalRecord>();
 
     protected override async Task OnInitializedAsync()
     {
-        records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords");
+        records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords") ?? new List<MedicalRecord>();
     }
 
-    private void AddRecord() => Navigation.NavigateTo("/medicalrecords/add");
-    private void EditRecord(int id) => Navigation.NavigateTo($"/medicalrecords/edit/{id}");
+    private void AddRecord()
+    {
+        Navigation.NavigateTo("/medicalrecords/add");
+    }
+
+    private void EditRecord(int id)
+    {
+        Navigation.NavigateTo($"/medicalrecords/edit/{id}");
+    }
 
     private async Task DeleteRecord(int id)
     {
-        var confirm = await JS.InvokeAsync<bool>("confirm", "Do you really want to delete?");
-        if (confirm)
-        {
-            await Http.DeleteAsync($"api/medicalrecords/{id}");
-            records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords");
-        }
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this record?");
+        if (!confirmed) return;
+
+        await Http.DeleteAsync($"api/medicalrecords/{id}");
+        records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords") ?? new List<MedicalRecord>();
     }
 
-    private class MedicalRecord
-    {
-        public int Id { get; set; }
-        public string Diagnosis { get; set; } = string.Empty;
-        public string Treatment { get; set; } = string.Empty;
-        public DateTime RecordDate { get; set; }
-        public Patient? Patient { get; set; }
-    }
-
-    private class Patient
-    {
-        public int Id { get; set; }
-        public string FullName { get; set; } = string.Empty;
-    }
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
 }

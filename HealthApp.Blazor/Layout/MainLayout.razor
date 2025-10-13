@@ -5,27 +5,34 @@
 @using HealthApp.Blazor.Auth
 @using Microsoft.AspNetCore.Components.Authorization
 
-
 <div class="page">
     <div class="sidebar">
-        <NavMenu/>
+        <NavMenu />
     </div>
 
     <main>
-        <div class="top-row px-4 d-flex justify-content-between align-items-center">
+        <!-- TOPO -->
+        <div class="top-row px-4 d-flex justify-content-between align-items-center bg-light border-bottom">
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
 
-            @if (isLoggedIn)
-            {
-                <button class="btn btn-danger" @onclick="Logout">Logout</button>
-            }
-            else
-            {
-                <a href="/login">Login</a>
-            }
+            <AuthorizeView>
+                <Authorized Context="auth">
+                    <div class="d-flex align-items-center">
+                        <span class="me-3 fw-bold text-primary">
+                            👋 Hello, @auth.User.Identity?.Name
+                        </span>
+                        <button class="btn btn-danger btn-sm" @onclick="Logout">Logout</button>
+                    </div>
+                </Authorized>
+
+                <NotAuthorized>
+                    <a href="/login" class="btn btn-outline-primary btn-sm">Login</a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
 
-        <article class="content px-4">
+        <!-- CONTEÚDO -->
+        <article class="content px-4 py-3">
             @Body
         </article>
     </main>

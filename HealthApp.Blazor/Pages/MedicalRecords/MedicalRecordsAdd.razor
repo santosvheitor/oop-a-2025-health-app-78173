@@ -1,48 +1,84 @@
 @page "/medicalrecords/add"
 @using HealthApp.Data.Models
+@inject HttpClient Http
 @inject NavigationManager NavigationManager
 
 <h3>Add Medical Record</h3>
 
-<EditForm Model="record" OnValidSubmit="SaveRegister">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+@if (record == null || patients == null || patients.Count == 0)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@record" OnValidSubmit="@HandleAdd">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-    <div class="mb-3">
-        <label>Diagnostic:</label>
-        <InputText class="form-control" @bind-Value="record.Diagnosis" />
-    </div>
+        <div class="mb-3">
+            <label>Patient:</label>
+            <select @bind="record.PatientId" class="form-control">
+                <option value="0">Select Patient</option>
+                @foreach (var p in patients)
+                {
+                    <option value="@p.Id">@p.FullName</option>
+                }
+            </select>
+        </div>
 
-    <div class="mb-3">
-        <label>Treatment:</label>
-        <InputText class="form-control" @bind-Value="record.Treatment" />
-    </div>
+        <div class="mb-3">
+            <label>Diagnosis:</label>
+            <InputText class="form-control" @bind-Value="record.Diagnosis" />
+        </div>
 
-    <div class="mb-3">
-        <label>Registration Date:</label>
-        <InputDate class="form-control" @bind-Value="record.RecordDate" />
-    </div>
+        <div class="mb-3">
+            <label>Treatment:</label>
+            <InputText class="form-control" @bind-Value="record.Treatment" />
+        </div>
 
-    <div class="mb-3">
-        <label>Patient:</label>
-        <InputNumber class="form-control" @bind-Value="record.PatientId" />
-    </div>
+        <div class="mb-3">
+            <label>Date:</label>
+            <InputDate class="form-control" @bind-Value="record.RecordDate" />
+        </div>
 
-    <button type="submit" class="btn btn-primary">Save</button>
-    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
-</EditForm>
+        <button type="submit" class="btn btn-success">Add Record</button>
+    </EditForm>
+}
 
 @code {
-    private MedicalRecord record = new MedicalRecord();
+    // Agora usamos o DTO (igual ao do backend)
+    public MedicalRecordCreateModel record { get; set; } = new();
+    public List<Patient> patients { get; set; } = new();
 
-    private void SaveRegister()
+    protected override async Task OnInitializedAsync()
     {
-        // Logic to save the record in the database
-        NavigationManager.NavigateTo("/medicalrecords");
+        // Busca lista de pacientes para o select
+        patients = await Http.GetFromJsonAsync<List<Patient>>("api/patients") ?? new List<Patient>();
     }
 
-    private void Cancel()
+    public async Task HandleAdd()
     {
-        NavigationManager.NavigateTo("/medicalrecords");
+        if (record.PatientId == 0)
+        {
+            Console.WriteLine("⚠ Nenhum paciente selecionado!");
+            return;
+        }
+
+        // Apenas para depuração
+        var json = System.Text.Json.JsonSerializer.Serialize(record);
+        Console.WriteLine("JSON enviado para API:");
+        Console.WriteLine(json);
+
+        // Envia o DTO simples (sem o objeto Patient)
+        var response = await Http.PostAsJsonAsync("api/medicalrecords", record);
+
+        Console.WriteLine($"Status code: {response.StatusCode}");
+        var responseText = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"Response body: {responseText}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/medicalrecords");
+        }
     }
 }
