@@ -27,8 +27,18 @@ public partial class Appointments : ComponentBase
         userIsPatient = user.IsInRole("Patient");
         userIsDoctor = user.IsInRole("Doctor");
 
-        // Carregar todos appointments
-        appointments = await Http.GetFromJsonAsync<List<Appointment>>("api/appointments");
+        try
+        {
+            if (userIsPatient)
+                appointments = await Http.GetFromJsonAsync<List<Appointment>>("api/appointments/mine");
+            else
+                appointments = await Http.GetFromJsonAsync<List<Appointment>>("api/appointments");
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"Erro ao carregar appointments: {ex.Message}");
+            appointments = new();
+        }
     }
 
     private void AddAppointment() => NavigationManager.NavigateTo("/appointments/add");

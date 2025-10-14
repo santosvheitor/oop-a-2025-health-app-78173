@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HealthApp.Data.Models;
 
@@ -16,6 +16,7 @@ public class Patient
 
     [Required]
     public string IdentityUserId { get; set; } = null!;
-    
-    
+
+    // 👇 Relacionamento com os registros médicos
+    public ICollection<MedicalRecord> MedicalRecords { get; set; } = new List<MedicalRecord>();
 }

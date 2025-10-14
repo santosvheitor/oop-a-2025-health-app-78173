@@ -1,0 +1,17 @@
+@using HealthApp.Blazor.Models
+@code {
+    [Parameter] public DoctorModel Doctor { get; set; } = new();
+}
+
+@if (Doctor == null)
+{
+    <p>No profile data found.</p>
+}
+else
+{
+    <div class="p-4 border rounded shadow-md max-w-lg mx-auto">
+        <h4 class="text-xl font-semibold mb-2">@Doctor.FullName</h4>
+        <p><strong>Specialty:</strong> @Doctor.Specialty</p>
+        <p><strong>Email:</strong> @Doctor.Email</p>
+    </div>
+}

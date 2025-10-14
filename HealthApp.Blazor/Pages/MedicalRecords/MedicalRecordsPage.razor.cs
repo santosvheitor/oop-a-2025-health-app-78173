@@ -1,6 +1,8 @@
 using HealthApp.Data.Models;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
+using Microsoft.JSInterop;
 
 namespace HealthApp.Blazor.Pages
 {
@@ -8,28 +10,41 @@ namespace HealthApp.Blazor.Pages
     {
         [Inject] private HttpClient Http { get; set; } = default!;
         [Inject] private NavigationManager Navigation { get; set; } = default!;
+        [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+        [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
 
-        public List<MedicalRecord> records { get; set; } = new List<MedicalRecord>();
+        public List<MedicalRecord> records { get; set; } = new();
+        private bool canEdit = false;
 
         protected override async Task OnInitializedAsync()
         {
-            records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords") ?? new List<MedicalRecord>();
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            canEdit = user.IsInRole("Doctor") || user.IsInRole("Admin");
+
+            try
+            {
+                records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords") ?? new();
+            }
+            catch
+            {
+                records = new();
+            }
         }
 
-        public void AddRecord()
-        {
-            Navigation.NavigateTo("/medicalrecords/add");
-        }
+        private void AddRecord() => Navigation.NavigateTo("/medicalrecords/add");
+        private void EditRecord(int id) => Navigation.NavigateTo($"/medicalrecords/edit/{id}");
 
-        public void EditRecord(int id)
+        private async Task DeleteRecord(int id)
         {
-            Navigation.NavigateTo($"/medicalrecords/edit/{id}");
-        }
+            if (!canEdit) return;
 
-        public async Task DeleteRecord(int id)
-        {
+            var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this record?");
+            if (!confirmed) return;
+
             await Http.DeleteAsync($"api/medicalrecords/{id}");
-            records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords") ?? new List<MedicalRecord>();
+            records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords") ?? new();
         }
     }
 }

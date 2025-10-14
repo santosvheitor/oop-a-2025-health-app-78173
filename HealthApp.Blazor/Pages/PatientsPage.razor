@@ -1,47 +1,155 @@
 @page "/patients"
-@using HealthApp.Domain.Models
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
+@using HealthApp.Blazor.Models
+@inject NavigationManager NavigationManager
 
-@attribute [Authorize(Roles="Admin")]
+<h3>Find Doctors</h3>
 
-<h3>Patients</h3>
+<div class="row mb-3">
+    <div class="col-md-6">
+        <input class="form-control" placeholder="Search by name or specialty" @bind="searchTerm" />
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary" @onclick="SearchDoctors">Search</button>
+        <button class="btn btn-secondary ms-2" @onclick="ResetSearch">Reset</button>
+    </div>
+</div>
 
-@if (userIsAdmin)
+<div class="row">
+    <div class="col-md-6">
+        <h5>Doctors</h5>
+        @if (doctors == null)
+        {
+            <p>Loading doctors...</p>
+        }
+        else if (!doctors.Any())
+        {
+            <p>No doctors found.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var d in doctors)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>@d.FullName</strong><br />
+                            <small>@d.Specialty</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-success" @onclick="() => OpenBookModal(d)">Book Appointment</button>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+
+    <div class="col-md-6">
+        <h5>My Appointments</h5>
+        @if (appointments == null)
+        {
+            <p>Loading appointments...</p>
+        }
+        else if (!appointments.Any())
+        {
+            <p>You have no appointments.</p>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Doctor</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in appointments)
+                    {
+                        <tr>
+                            <td>@a.Doctor?.FullName</td>
+                            <td>@a.Date.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@a.Status</td>
+                            <td>
+                                @if (CanCancel(a))
+                                {
+                                    <button class="btn btn-danger btn-sm" @onclick="() => CancelAppointment(a.Id)">Cancel</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-danger btn-sm" disabled>Cancel</button>
+                                }
+                                <button class="btn btn-warning btn-sm ms-2" @onclick="() => OpenRescheduleModal(a)">Reschedule</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<hr />
+
+<h5>Prescriptions</h5>
+@if (prescriptions == null)
 {
-    <button @onclick="AddPatient">Add Patient</button>
+    <p>Loading prescriptions...</p>
+}
+else if (!prescriptions.Any())
+{
+    <p>No prescriptions found.</p>
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var p in prescriptions)
+        {
+            <li class="list-group-item">
+                <div><strong>@p.Medication</strong> — @p.Dosage</div>
+                <div><small>@p.Instructions</small></div>
+                <div><small class="text-muted">@p.IssueDate.ToString("dd/MM/yyyy")</small></div>
+            </li>
+        }
+    </ul>
 }
 
-<table class="table">
-    <thead>
-    <tr>
-        <th>Id</th>
-        <th>Full Name</th>
-        <th>Email</th>
-        <th>Actions</th>
-    </tr>
-    </thead>
-    <tbody>
-    @if (patients != null && patients.Any())
-    {
-        foreach (var patient in patients)
-        {
-            <tr>
-                <td>@patient.Id</td>
-                <td>@patient.FullName</td>
-                <td>@patient.Email</td>
-                <td>
-                    <button @onclick="() => EditPatient(patient.Id)">Edit</button>
-                    <button @onclick="() => DeletePatient(patient.Id)">Delete</button>
-                </td>
-            </tr>
-        }
-    }
-    else
-    {
-        <tr>
-            <td colspan="4">No patients found.</td>
-        </tr>
-    }
-    </tbody>
-</table>
+<!-- Book Modal -->
+<div class="modal fade" id="bookModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content p-3">
+            <h5>Book appointment with <span class="fw-bold">@selectedDoctor?.FullName</span></h5>
+
+            <div class="mb-2">
+                <label>Date & time</label>
+                <InputDate @bind-Value="bookDateTime" class="form-control" />
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-secondary me-2" @onclick="CloseBookModal">Close</button>
+                <button class="btn btn-primary" @onclick="ConfirmBook">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reschedule Modal -->
+<div class="modal fade" id="reschedModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content p-3">
+            <h5>Reschedule appointment with <span class="fw-bold">@rescheduleAppointment?.Doctor?.FullName</span></h5>
+
+            <div class="mb-2">
+                <label>New date & time</label>
+                <InputDate @bind-Value="rescheduleDateTime" class="form-control" />
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-secondary me-2" @onclick="CloseReschedModal">Close</button>
+                <button class="btn btn-primary" @onclick="ConfirmReschedule">Save</button>
+            </div>
+        </div>
+    </div>
+</div>

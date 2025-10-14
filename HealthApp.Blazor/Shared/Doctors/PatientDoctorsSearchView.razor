@@ -1,0 +1,30 @@
+@using HealthApp.Blazor.Models
+@code {
+    [Parameter] public List<DoctorModel> Doctors { get; set; } = new();
+    [Parameter] public string SearchTerm { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnSearch { get; set; }
+}
+
+<div class="mb-4">
+    <input type="text" @bind="SearchTerm" placeholder="Search by name or specialty..."
+           class="border p-2 rounded w-2/3 mr-2" />
+    <button class="btn btn-primary" @onclick="OnSearch">Search</button>
+</div>
+
+@if (Doctors == null || !Doctors.Any())
+{
+    <p>No doctors found.</p>
+}
+else
+{
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @foreach (var doctor in Doctors)
+        {
+            <div class="p-4 border rounded shadow-sm">
+                <h4 class="text-lg font-semibold">@doctor.FullName</h4>
+                <p><strong>Specialty:</strong> @doctor.Specialty</p>
+                <p><strong>Email:</strong> @doctor.Email</p>
+            </div>
+        }
+    </div>
+}

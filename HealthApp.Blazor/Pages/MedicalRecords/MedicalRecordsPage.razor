@@ -1,11 +1,16 @@
 @page "/medicalrecords"
 @using HealthApp.Data.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @inject HttpClient Http
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
 
 <h3>Medical Records</h3>
 
-<button class="btn btn-success mb-3" @onclick="AddRecord">Add New Record</button>
+@if (canEdit)
+{
+    <button class="btn btn-success mb-3" @onclick="AddRecord">Add New Record</button>
+}
 
 @if (records == null)
 {
@@ -24,21 +29,27 @@ else
                 <th>Diagnosis</th>
                 <th>Treatment</th>
                 <th>Date</th>
-                <th>Actions</th>
+                @if (canEdit)
+                {
+                    <th>Actions</th>
+                }
             </tr>
         </thead>
         <tbody>
             @foreach (var r in records)
             {
                 <tr>
-                    <td>@r.Patient.FullName</td>
+                    <td>@r.Patient?.FullName</td>
                     <td>@r.Diagnosis</td>
                     <td>@r.Treatment</td>
                     <td>@r.RecordDate.ToShortDateString()</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" @onclick="() => EditRecord(r.Id)">Edit</button>
-                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteRecord(r.Id)">Delete</button>
-                    </td>
+                    @if (canEdit)
+                    {
+                        <td>
+                            <button class="btn btn-primary btn-sm" @onclick="() => EditRecord(r.Id)">Edit</button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteRecord(r.Id)">Delete</button>
+                        </td>
+                    }
                 </tr>
             }
         </tbody>
@@ -46,30 +57,38 @@ else
 }
 
 @code {
-    public List<MedicalRecord> records { get; set; } = new List<MedicalRecord>();
+    public List<MedicalRecord> records { get; set; } = new();
+    private bool canEdit = false;
 
     protected override async Task OnInitializedAsync()
     {
-        records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords") ?? new List<MedicalRecord>();
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        canEdit = user.IsInRole("Doctor") || user.IsInRole("Admin");
+
+        try
+        {
+            records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords") ?? new();
+        }
+        catch (HttpRequestException)
+        {
+            records = new();
+        }
     }
 
-    private void AddRecord()
-    {
-        Navigation.NavigateTo("/medicalrecords/add");
-    }
-
-    private void EditRecord(int id)
-    {
-        Navigation.NavigateTo($"/medicalrecords/edit/{id}");
-    }
+    private void AddRecord() => Navigation.NavigateTo("/medicalrecords/add");
+    private void EditRecord(int id) => Navigation.NavigateTo($"/medicalrecords/edit/{id}");
 
     private async Task DeleteRecord(int id)
     {
+        if (!canEdit) return;
+
         var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this record?");
         if (!confirmed) return;
 
         await Http.DeleteAsync($"api/medicalrecords/{id}");
-        records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords") ?? new List<MedicalRecord>();
+        records = await Http.GetFromJsonAsync<List<MedicalRecord>>("api/medicalrecords") ?? new();
     }
 
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;

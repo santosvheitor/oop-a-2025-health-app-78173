@@ -1,4 +1,6 @@
 ﻿@using HealthApp.Blazor.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">HealthApp.Blazor</a>
@@ -17,45 +19,46 @@
             </NavLink>
         </div>
 
-        <!-- 👇 Controle de autenticação -->
         <AuthorizeView>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="patients">
-                        <i class="fas fa-user-injured"></i>
-                        <span>Patients</span>
-                    </NavLink>
-                </div>
+            <Authorized Context="authState">
+                @if (authState?.User?.Identity?.IsAuthenticated == true)
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="patients">
+                            <i class="fas fa-user-injured"></i>
+                            <span>Patients</span>
+                        </NavLink>
+                    </div>
 
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="doctors">
-                        <i class="fas fa-user-md"></i>
-                        <span>Doctors</span>
-                    </NavLink>
-                </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="doctors">
+                            <i class="fas fa-user-md"></i>
+                            <span>Doctors</span>
+                        </NavLink>
+                    </div>
 
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="appointments">
-                        <i class="fas fa-calendar-check"></i>
-                        <span>Appointments</span>
-                    </NavLink>
-                </div>
+                    <!-- ✅ Só mostra se estiver logado -->
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="appointments">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Appointments</span>
+                        </NavLink>
+                    </div>
 
-                <!-- ✅ Novo link: Prontuários Médicos -->
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="medicalrecords">
-                        <i class="fas fa-notes-medical"></i>
-                        <span>Medical Records</span>
-                    </NavLink>
-                </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="medicalrecords">
+                            <i class="fas fa-notes-medical"></i>
+                            <span>Medical Records</span>
+                        </NavLink>
+                    </div>
 
-                <!-- 🔹 Botão de Logout -->
-                <div class="nav-item px-3">
-                    <a class="nav-link" href="#" @onclick="Logout">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Logout</span>
-                    </a>
-                </div>
+                    <div class="nav-item px-3">
+                        <a class="nav-link" href="#" @onclick="Logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                }
             </Authorized>
 
             <NotAuthorized>
@@ -95,6 +98,6 @@
     {
         await JS.InvokeVoidAsync("localStorage.removeItem", "authToken");
         AuthProvider.NotifyUserLogout();
-        Nav.NavigateTo("/login");
+        Nav.NavigateTo("/login", true);
     }
 }

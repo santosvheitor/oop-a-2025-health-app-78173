@@ -1,4 +1,4 @@
-using HealthApp.Data.Data; // for ApplicationUser
+using HealthApp.Data.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -23,15 +23,15 @@ public class AccountController : ControllerBase
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         IConfiguration configuration,
-        HospitalContext context) 
+        HospitalContext context)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _configuration = configuration;
-        _context = context; 
+        _context = context;
     }
 
-   
+    // ✅ Register
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterModel model)
     {
@@ -45,11 +45,8 @@ public class AccountController : ControllerBase
 
         var result = await _userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
-        {
             return BadRequest(result.Errors);
-        }
 
-        // Define the user's role
         await _userManager.AddToRoleAsync(user, model.Role);
 
         if (model.Role == "Doctor")
@@ -75,28 +72,31 @@ public class AccountController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
-        
+
         return Ok("User registered successfully!");
     }
 
-
+    // ✅ Login
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginModel model)
     {
         var user = await _userManager.FindByEmailAsync(model.Email);
-        if (user == null) return Unauthorized();
+        if (user == null)
+            return Unauthorized();
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
-        if (!result.Succeeded) return Unauthorized();
+        if (!result.Succeeded)
+            return Unauthorized();
 
-        // Get the user's roles
         var roles = await _userManager.GetRolesAsync(user);
 
+        // ✅ Aqui está o ponto importante:
+        // usamos o ClaimTypes.Name com o e-mail para o backend reconhecer o paciente
         var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Email),
             new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim(ClaimTypes.Name, user.UserName)
+            new Claim(ClaimTypes.Name, user.Email) // <-- ESSENCIAL
         };
 
         foreach (var role in roles)
