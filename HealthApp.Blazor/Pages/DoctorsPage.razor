@@ -1,44 +1,78 @@
 @page "/doctors"
-@using HealthApp.Domain.Models
+@using System.Net.Http.Json
+@using HealthApp.Blazor.Models
 @using Microsoft.AspNetCore.Authorization
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@attribute [Authorize]
 @using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
 
+@inherits ComponentBase
 
-@attribute [Authorize(Roles="Admin")]
+<h3 class="text-2xl font-semibold mb-4">Doctors</h3>
 
-<h3>Doctors</h3>
-
-@if (userIsAdmin)
+@if (isLoading)
 {
-    <button @onclick="AddDoctor">Add Doctor</button>
+    <p>Loading doctors...</p>
+}
+else if (isAdmin)
+{
+    <AdminDoctorsView Doctors="Doctors" OnAdd="AddDoctor" OnDelete="DeleteDoctor" />
+}
+else if (isDoctor)
+{
+    <DoctorProfileView Doctor="CurrentDoctor" />
+}
+else if (isPatient)
+{
+    <PatientDoctorsSearchView Doctors="Doctors" SearchTerm="searchTerm" OnSearch="SearchDoctors" />
 }
 
-<table>
-    <thead>
-    <tr>
-        <th>Id</th>
-        <th>Full Name</th>
-        <th>Specialty</th>
-        <th>Email</th>
-        <th>Actions</th>
-    </tr>
-    </thead>
-    <tbody>
-    @foreach (var doctor in doctors)
+@code {
+    private bool isLoading = true;
+    private bool isAdmin;
+    private bool isDoctor;
+    private bool isPatient;
+
+    private List<DoctorModel> Doctors = new();
+    private DoctorModel CurrentDoctor = new();
+    private string searchTerm = string.Empty;
+
+    protected override async Task OnInitializedAsync()
     {
-        <tr>
-            <td>@doctor.Id</td>
-            <td>@doctor.FullName</td>
-            <td>@doctor.Specialty</td>
-            <td>@doctor.Email</td>
-            <td>
-                @if (userIsAdmin)
-                {
-                    <button @onclick="() => EditDoctor(doctor.Id)">Edit</button>
-                    <button @onclick="() => DeleteDoctor(doctor.Id)">Delete</button>
-                }
-            </td>
-        </tr>
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.IsInRole("Admin")) isAdmin = true;
+        else if (user.IsInRole("Doctor")) isDoctor = true;
+        else if (user.IsInRole("Patient")) isPatient = true;
+
+        if (isAdmin || isPatient)
+            Doctors = await Http.GetFromJsonAsync<List<DoctorModel>>("api/doctors") ?? new();
+
+        if (isDoctor)
+            CurrentDoctor = await Http.GetFromJsonAsync<DoctorModel>("api/doctors/me") ?? new();
+
+        isLoading = false;
     }
-    </tbody>
-</table>
+
+    private void AddDoctor()
+    {
+        NavManager.NavigateTo("/doctors/add");
+    }
+
+    private async Task DeleteDoctor(int id)
+    {
+        await Http.DeleteAsync($"api/doctors/{id}");
+        Doctors = await Http.GetFromJsonAsync<List<DoctorModel>>("api/doctors") ?? new();
+    }
+
+    private async Task SearchDoctors()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+            Doctors = await Http.GetFromJsonAsync<List<DoctorModel>>("api/doctors") ?? new();
+        else
+            Doctors = await Http.GetFromJsonAsync<List<DoctorModel>>($"api/doctors/search?query={searchTerm}") ?? new();
+    }
+}

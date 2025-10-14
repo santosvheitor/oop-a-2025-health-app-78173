@@ -1,0 +1,42 @@
+@using HealthApp.Blazor.Models
+@code {
+    [Parameter] public List<DoctorModel> Doctors { get; set; } = new();
+    [Parameter] public EventCallback OnAdd { get; set; }
+    [Parameter] public EventCallback<int> OnDelete { get; set; }
+}
+
+<div class="flex justify-between items-center mb-4">
+    <h4 class="text-xl font-semibold">All Doctors</h4>
+    <button class="btn btn-primary" @onclick="OnAdd">Add Doctor</button>
+</div>
+
+@if (Doctors == null || !Doctors.Any())
+{
+    <p>No doctors registered yet.</p>
+}
+else
+{
+    <table class="table-auto w-full border">
+        <thead class="bg-gray-200">
+        <tr>
+            <th class="p-2">Name</th>
+            <th class="p-2">Specialty</th>
+            <th class="p-2">Email</th>
+            <th class="p-2 text-center">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var doctor in Doctors)
+        {
+            <tr class="border-t">
+                <td class="p-2">@doctor.FullName</td>
+                <td class="p-2">@doctor.Specialty</td>
+                <td class="p-2">@doctor.Email</td>
+                <td class="p-2 text-center">
+                    <button class="btn btn-sm btn-danger" @onclick="() => OnDelete.InvokeAsync(doctor.Id)">Delete</button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

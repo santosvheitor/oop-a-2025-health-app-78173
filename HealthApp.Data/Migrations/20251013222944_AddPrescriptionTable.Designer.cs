@@ -4,6 +4,7 @@ using HealthApp.Data.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HealthApp.Data.Migrations
 {
     [DbContext(typeof(HospitalContext))]
-    partial class HospitalContextModelSnapshot : ModelSnapshot
+    [Migration("20251013222944_AddPrescriptionTable")]
+    partial class AddPrescriptionTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -99,9 +102,6 @@ namespace HealthApp.Data.Migrations
                     b.Property<int>("PatientId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PatientId1")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("RecordDate")
                         .HasColumnType("datetime2");
 
@@ -112,8 +112,6 @@ namespace HealthApp.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PatientId");
-
-                    b.HasIndex("PatientId1");
 
                     b.ToTable("MedicalRecords");
                 });
@@ -211,10 +209,6 @@ namespace HealthApp.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HealthApp.Data.Models.Patient", null)
-                        .WithMany("MedicalRecords")
-                        .HasForeignKey("PatientId1");
-
                     b.Navigation("Patient");
                 });
 
@@ -235,11 +229,6 @@ namespace HealthApp.Data.Migrations
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
-                });
-
-            modelBuilder.Entity("HealthApp.Data.Models.Patient", b =>
-                {
-                    b.Navigation("MedicalRecords");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.AspNetCore.Identity;
 
 namespace HealthApp.Data.Models;
 
@@ -15,10 +14,9 @@ public class Patient
     [EmailAddress]
     public string Email { get; set; } = null!;
 
-    // Identity User
     [Required]
-    [ForeignKey("User")]
     public string IdentityUserId { get; set; } = null!;
 
-    public IdentityUser? User { get; set; }
+    // 👇 Relacionamento com os registros médicos
+    public ICollection<MedicalRecord> MedicalRecords { get; set; } = new List<MedicalRecord>();
 }

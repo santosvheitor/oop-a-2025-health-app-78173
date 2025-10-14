@@ -50,6 +50,12 @@ namespace HealthApp.Blazor.Auth;
         {
             NotifyAuthenticationStateChanged(Task.FromResult(_anonymous));
         }
+        
+        public async Task<string?> GetTokenAsync()
+{
+    return await _js.InvokeAsync<string>("localStorage.getItem", TOKEN_KEY);
+}
+
 
         private static IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
         {
