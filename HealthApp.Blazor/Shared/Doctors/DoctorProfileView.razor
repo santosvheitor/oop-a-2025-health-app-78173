@@ -1,9 +1,10 @@
 @using HealthApp.Blazor.Models
+
 @code {
     [Parameter] public DoctorModel Doctor { get; set; } = new();
 }
 
-@if (Doctor == null)
+@if (Doctor == null || string.IsNullOrWhiteSpace(Doctor.FullName))
 {
     <p>No profile data found.</p>
 }

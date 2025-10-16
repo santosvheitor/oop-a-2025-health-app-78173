@@ -1,8 +1,10 @@
 @using HealthApp.Blazor.Models
+
 @code {
     [Parameter] public List<DoctorModel> Doctors { get; set; } = new();
     [Parameter] public EventCallback OnAdd { get; set; }
     [Parameter] public EventCallback<int> OnDelete { get; set; }
+    [Parameter] public EventCallback<int>? OnEdit { get; set; }
 }
 
 <div class="flex justify-between items-center mb-4">
@@ -32,7 +34,8 @@ else
                 <td class="p-2">@doctor.FullName</td>
                 <td class="p-2">@doctor.Specialty</td>
                 <td class="p-2">@doctor.Email</td>
-                <td class="p-2 text-center">
+                <td class="p-2 text-center space-x-2">
+                    <button class="btn btn-sm btn-warning" @onclick="() => OnEdit?.InvokeAsync(doctor.Id)">Edit</button>
                     <button class="btn btn-sm btn-danger" @onclick="() => OnDelete.InvokeAsync(doctor.Id)">Delete</button>
                 </td>
             </tr>

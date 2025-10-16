@@ -43,22 +43,22 @@ public class PatientsController : ControllerBase
 
     // ✅ GET: api/patients/me
     // Paciente autenticado vê seus próprios dados
+    // Dentro do endpoint GET /me
     [HttpGet("me")]
     [Authorize(Roles = "Patient")]
     public async Task<ActionResult<Patient>> GetLoggedInPatient()
     {
-        var email = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var email = User.Identity?.Name; // ⚡ antes estava ClaimTypes.NameIdentifier
         if (string.IsNullOrEmpty(email))
             return Unauthorized("User is not authenticated.");
 
-        var patient = await _context.Patients
-            .FirstOrDefaultAsync(p => p.Email == email);
-
+        var patient = await _context.Patients.FirstOrDefaultAsync(p => p.Email == email);
         if (patient == null)
             return NotFound("Patient not found.");
 
         return patient;
     }
+
 
     // 🔍 Endpoint de debug (opcional)
     [HttpGet("debug")]

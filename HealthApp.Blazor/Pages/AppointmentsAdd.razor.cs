@@ -23,33 +23,20 @@ namespace HealthApp.Blazor.Pages
                 appointment.Date = DateTime.Today;
 
                 // Carrega a lista de médicos
-                doctors = await Http.GetFromJsonAsync<List<Doctor>>("api/doctors") ?? new List<Doctor>();
+                doctors = await Http.GetFromJsonAsync<List<Doctor>>("api/doctors") 
+                           ?? new List<Doctor>();
 
-                // Carrega o paciente logado
-                var response = await Http.GetAsync("api/patients/me");
-                if (response.IsSuccessStatusCode)
+                // Carrega o paciente logado (sem redirecionar)
+                var patient = await Http.GetFromJsonAsync<Patient>("api/patients/me");
+                if (patient != null)
                 {
-                    var patient = await response.Content.ReadFromJsonAsync<Patient>();
-                    if (patient != null)
-                    {
-                        patientFullName = patient.FullName;
-                        patientId = patient.Id;
-                        appointment.PatientId = patientId;
-                    }
-                    else
-                    {
-                        Console.WriteLine("Patient not found.");
-                    }
-                }
-                else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                {
-                    Console.WriteLine("User is not authenticated.");
-                    NavigationManager.NavigateTo("/login");
-                    return;
+                    patientFullName = patient.FullName;
+                    patientId = patient.Id;
+                    appointment.PatientId = patientId;
                 }
                 else
                 {
-                    Console.WriteLine($"Error loading patient: {response.StatusCode}");
+                    Console.WriteLine("Patient not found.");
                 }
             }
             catch (HttpRequestException ex)
@@ -67,8 +54,7 @@ namespace HealthApp.Blazor.Pages
             appointment.Status = "Pending";
             appointment.PatientId = patientId;
 
-            // Validação corrigida: agora considera DoctorId == 0 e Date default
-            if (appointment.PatientId == 0 || appointment.DoctorId == 0 || appointment.Date == default(DateTime))
+            if (appointment.PatientId == 0 || appointment.DoctorId == 0 || appointment.Date == default)
             {
                 Console.WriteLine("Error: Fill in all required fields.");
                 return;

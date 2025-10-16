@@ -18,41 +18,40 @@ public class DoctorsController : ControllerBase
         _context = context;
     }
 
-    // ✅ Retorna todos os médicos (para Admin, ou público se quiser)
+    // Todos os médicos
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Doctor>>> GetDoctors()
     {
         return await _context.Doctors.ToListAsync();
     }
 
-    // ✅ Retorna o perfil do médico logado
+    // Perfil do médico logado
     [HttpGet("me")]
     [Authorize(Roles = "Doctor")]
-    public async Task<IActionResult> GetMyProfile()
+    public async Task<ActionResult<Doctor>> GetMyProfile()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return BadRequest("Usuário inválido.");
+        var email = User.Identity?.Name; // ⚡ usar email do JWT
+        if (string.IsNullOrEmpty(email))
+            return Unauthorized();
 
-        var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.IdentityUserId == userId);
+        var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.Email == email);
         if (doctor == null)
-            return NotFound("Médico não encontrado.");
+            return NotFound("Doctor not found.");
 
         return Ok(doctor);
     }
 
-    // ✅ Retorna um médico por ID
+
+    // Médico por ID
     [HttpGet("{id}")]
     public async Task<ActionResult<Doctor>> GetDoctor(int id)
     {
         var doctor = await _context.Doctors.FindAsync(id);
-        if (doctor == null)
-            return NotFound();
-
+        if (doctor == null) return NotFound();
         return doctor;
     }
 
-    // ✅ Cria novo médico (somente Admin)
+    // Criar médico (Admin)
     [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<Doctor>> PostDoctor(Doctor doctor)
@@ -60,9 +59,8 @@ public class DoctorsController : ControllerBase
         if (string.IsNullOrWhiteSpace(doctor.FullName) || string.IsNullOrWhiteSpace(doctor.Email))
             return BadRequest("Nome completo e email são obrigatórios.");
 
-        var exists = await _context.Doctors.AnyAsync(d => d.Email == doctor.Email);
-        if (exists)
-            return BadRequest("Já existe um médico cadastrado com este email.");
+        if (await _context.Doctors.AnyAsync(d => d.Email == doctor.Email))
+            return BadRequest("Já existe um médico com este email.");
 
         _context.Doctors.Add(doctor);
         await _context.SaveChangesAsync();
@@ -70,28 +68,24 @@ public class DoctorsController : ControllerBase
         return CreatedAtAction(nameof(GetDoctor), new { id = doctor.Id }, doctor);
     }
 
-    // ✅ Atualiza dados
+    // Atualizar (Admin ou Doctor)
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin,Doctor")]
     public async Task<IActionResult> PutDoctor(int id, Doctor doctor)
     {
-        if (id != doctor.Id)
-            return BadRequest();
-
+        if (id != doctor.Id) return BadRequest();
         _context.Entry(doctor).State = EntityState.Modified;
         await _context.SaveChangesAsync();
         return NoContent();
     }
 
-    // ✅ Remove médico
+    // Remover (Admin)
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteDoctor(int id)
     {
         var doctor = await _context.Doctors.FindAsync(id);
-        if (doctor == null)
-            return NotFound();
-
+        if (doctor == null) return NotFound();
         _context.Doctors.Remove(doctor);
         await _context.SaveChangesAsync();
         return NoContent();

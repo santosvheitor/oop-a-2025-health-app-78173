@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using HealthApp.Api.Models;
 using HealthApp.Api.Seed;
 using HealthApp.Data.Data;
@@ -10,7 +11,7 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔹 Connection Strings 
+// 🔹 Connection Strings
 var identityConnection = builder.Configuration.GetConnectionString("IdentityConnection");
 var hospitalConnection = builder.Configuration.GetConnectionString("HospitalConnection");
 
@@ -53,9 +54,14 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+
+        // Ajuste importante: use ClaimTypes.Name (o claim que você emite no Login)
+        RoleClaimType = ClaimTypes.Role,
+        NameClaimType = ClaimTypes.Name
     };
 });
+
 
 // 🔹 Authorization
 builder.Services.AddAuthorization(options =>
@@ -65,10 +71,9 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
 });
 
-// 🔹 API & Swagger
+// 🔹 Controllers + Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-// Swagger + JWT configuration
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -77,7 +82,6 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1"
     });
 
-    // Adiciona o suporte ao botão Authorize (JWT)
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -110,7 +114,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(MyAllowSpecificOrigins, policy =>
     {
-        policy.WithOrigins("http://localhost:5079", "https://localhost:5079")
+        policy.WithOrigins(
+            "http://localhost:5079", "https://localhost:5079",
+            "http://localhost:5101", "https://localhost:5101")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -128,10 +134,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 // 🔹 Seed default roles
