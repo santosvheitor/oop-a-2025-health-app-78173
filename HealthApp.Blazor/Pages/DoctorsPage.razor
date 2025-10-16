@@ -51,19 +51,19 @@ else if (isPatient)
         {
             if (isAdmin || isPatient)
             {
-                // Busca todos os médicos para Admin e Patient
+                // Search all doctors for Admin and Patient
                 Doctors = await Http.GetFromJsonAsync<List<DoctorModel>>("api/doctors") ?? new();
             }
 
             if (isDoctor)
             {
-                // Busca o próprio perfil do Doctor
+                //Search the Doctor's own profile
                 CurrentDoctor = await Http.GetFromJsonAsync<DoctorModel>("api/doctors/me") ?? new();
             }
         }
         catch (HttpRequestException ex)
         {
-            Console.WriteLine($"Erro ao carregar dados dos médicos: {ex.Message}");
+            Console.WriteLine($"Error to load data from the doctors: {ex.Message}");
         }
 
         isLoading = false;
@@ -81,7 +81,7 @@ else if (isPatient)
         }
         else
         {
-            Console.WriteLine("Erro ao deletar médico.");
+            Console.WriteLine("Error to delete doctor.");
         }
     }
 

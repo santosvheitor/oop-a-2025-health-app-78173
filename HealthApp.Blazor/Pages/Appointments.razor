@@ -2,13 +2,13 @@
 @using HealthApp.Domain.Models
 @using Microsoft.AspNetCore.Authorization
 
-@attribute [Authorize(Roles="Admin,Doctor,Patient")]
+@attribute [Authorize(Roles = "Admin,Doctor,Patient")]
 
 <h3>Appointments</h3>
 
 @if (userIsAdmin || userIsPatient)
 {
-    <button class="btn btn-success mb-3" @onclick="AddAppointment">Add Appointment</button>
+    <button class="btn btn-success mb-3" @onclick="ShowAddModal">Add Appointment</button>
 }
 
 @if (appointments == null || !appointments.Any())
@@ -19,37 +19,70 @@ else
 {
     <table class="table table-striped table-bordered">
         <thead class="table-dark">
-        <tr>
-            <th>Id</th>
-            <th>Patient</th>
-            <th>Doctor</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
+            <tr>
+                <th>Id</th>
+                <th>Patient</th>
+                <th>Doctor</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
         </thead>
         <tbody>
-        @foreach (var appointment in appointments)
-        {
-            <tr>
-                <td>@appointment.Id</td>
-                <td>@appointment.Patient?.FullName</td>
-                <td>@appointment.Doctor?.FullName</td>
-                <td>@appointment.Date.ToString("dd/MM/yyyy HH:mm")</td>
-                <td>@appointment.Status</td>
-                <td>
-                    @if (userIsAdmin)
-                    {
-                        <button class="btn btn-sm btn-primary me-2" @onclick="() => EditAppointment(appointment.Id)">Edit</button>
-                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteAppointment(appointment.Id)">Delete</button>
-                    }
-                    else if (userIsDoctor && appointment.Status == "Pending")
-                    {
-                        <button class="btn btn-sm btn-success" @onclick="() => ConfirmAppointment(appointment.Id)">Confirm</button>
-                    }
-                </td>
-            </tr>
-        }
+            @foreach (var appointment in appointments)
+            {
+                <tr>
+                    <td>@appointment.Id</td>
+                    <td>@appointment.Patient?.FullName</td>
+                    <td>@appointment.Doctor?.FullName</td>
+                    <td>@appointment.Date.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@appointment.Status</td>
+                    <td>
+                        @if (userIsAdmin)
+                        {
+                            <button class="btn btn-sm btn-primary me-2" @onclick="() => EditAppointment(appointment.Id)">Edit</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteAppointment(appointment.Id)">Delete</button>
+                        }
+                        else if (userIsDoctor && appointment.Status == "Pending")
+                        {
+                            <button class="btn btn-sm btn-success" @onclick="() => ConfirmAppointment(appointment.Id)">Confirm</button>
+                        }
+                    </td>
+                </tr>
+            }
         </tbody>
     </table>
+}
+
+<!-- Modal de novo agendamento -->
+@if (showAddModal)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content p-3">
+                <h5>New Appointment</h5>
+
+                <div class="mb-2">
+                    <label>Date/Time:</label>
+                    <input type="datetime-local" @bind="newAppointment.Date" class="form-control" />
+                </div>
+
+                <div class="mb-2">
+                    <label>Doctor:</label>
+                    <select class="form-select" @bind="newAppointment.DoctorId">
+                        <option value="0">-- Select Doctor --</option>
+                        @foreach (var doc in doctors)
+                        {
+                            <option value="@doc.Id">@doc.FullName (@doc.Specialty)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="text-end">
+                    <button class="btn btn-secondary me-2" @onclick="() => showAddModal = false">Cancel</button>
+                    <button class="btn btn-primary" @onclick="AddAppointment">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
 }

@@ -1,7 +1,182 @@
 ﻿@page "/"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Rendering
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
 
-<PageTitle>Home</PageTitle>
+<h3 class="text-center mt-4">🏥 Hospital Management System</h3>
 
-<h1>Hello, world!</h1>
+@if (isLoading)
+{
+    <p class="text-center text-muted">Loading user information...</p>
+}
+else if (user is not null)
+{
+    <div class="text-center my-3">
+        <h4>Welcome, @userName!</h4>
+        <p class="text-secondary">You are logged in as <strong>@userRole</strong>.</p>
+    </div>
 
-Welcome to your new app.
+    @if (userRole == "Admin" || userRole == "Doctor")
+    {
+        <div class="container mb-4">
+            <div class="row text-center">
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <h6 class="text-muted">Patients</h6>
+                            <h3>@patientsCount</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <h6 class="text-muted">Appointments</h6>
+                            <h3>@appointmentsCount</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <h6 class="text-muted">Medical Records</h6>
+                            <h3>@recordsCount</h3>
+                        </div>
+                    </div>
+                </div>
+                @if (userRole == "Doctor")
+                {
+                    <div class="col-md-3">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <h6 class="text-muted">Pending Appointments</h6>
+                                <h3>@pendingAppointments</h3>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+
+            @if (userRole == "Admin")
+            {
+                <DashboardCard title="👨‍⚕️ Manage Doctors" description="Add, edit, and remove doctors." link="/doctors" />
+                <DashboardCard title="👥 Manage Patients" description="View and manage all patients." link="/patients" />
+                <DashboardCard title="📅 Appointments" description="Manage all hospital appointments." link="/appointments" />
+                <DashboardCard title="🩺 Medical Records" description="Access all patient records." link="/medicalrecords" />
+            }
+            else if (userRole == "Doctor")
+            {
+                <DashboardCard title="📅 My Appointments" description="View and confirm your appointments." link="/appointments" />
+                <DashboardCard title="🩺 Medical Records" description="Create and update patient records." link="/medicalrecords" />
+                <DashboardCard title="💊 Prescriptions" description="Manage prescriptions and treatments." link="/prescriptions" />
+            }
+            else if (userRole == "Patient")
+            {
+                <DashboardCard title="👨‍⚕️ Find Doctors" description="Search for available doctors." link="/patients" />
+                <DashboardCard title="📅 My Appointments" description="Manage your appointments and schedules." link="/appointments" />
+                <DashboardCard title="🩺 My Records" description="View your medical records and prescriptions." link="/medicalrecords" />
+            }
+            else
+            {
+                <p class="text-center text-muted">User role not recognized.</p>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="text-center mt-5">
+        <h5>Welcome to HospitalApp</h5>
+        <p>Please <a href="/login">log in</a> to access the system.</p>
+    </div>
+}
+
+@code {
+    private ClaimsPrincipal? user;
+    private string userName = "";
+    private string userRole = "";
+    private bool isLoading = true;
+
+    private int patientsCount;
+    private int appointmentsCount;
+    private int recordsCount;
+    private int pendingAppointments;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+
+        if (user.Identity?.IsAuthenticated ?? false)
+        {
+            userName = user.Identity.Name ?? "User";
+            userRole = user.FindFirst(ClaimTypes.Role)?.Value ?? "Unknown";
+
+            if (userRole == "Admin" || userRole == "Doctor")
+            {
+                await LoadDashboardStats();
+            }
+        }
+
+        isLoading = false;
+    }
+
+    // ✅ Opção 1 — Atualiza automaticamente ao retornar para a Home
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender && (userRole == "Admin" || userRole == "Doctor"))
+        {
+            await LoadDashboardStats();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadDashboardStats()
+    {
+        try
+        {
+            patientsCount = await Http.GetFromJsonAsync<int>("api/stats/patients");
+            appointmentsCount = await Http.GetFromJsonAsync<int>("api/stats/appointments");
+            recordsCount = await Http.GetFromJsonAsync<int>("api/stats/records");
+
+            if (userRole == "Doctor")
+                pendingAppointments = await Http.GetFromJsonAsync<int>("api/stats/appointments/pending");
+        }
+        catch
+        {
+            patientsCount = appointmentsCount = recordsCount = pendingAppointments = 0;
+        }
+    }
+}
+
+@code {
+    public class DashboardCard : ComponentBase
+    {
+        [Parameter] public string Title { get; set; } = string.Empty;
+        [Parameter] public string Description { get; set; } = string.Empty;
+        [Parameter] public string Link { get; set; } = string.Empty;
+
+        protected override void BuildRenderTree(RenderTreeBuilder builder)
+        {
+            builder.OpenElement(0, "div");
+            builder.AddAttribute(1, "class", "col-md-3 m-2");
+            builder.AddMarkupContent(2, $@"
+                <div class='card shadow-sm border-0 h-100'>
+                    <div class='card-body text-center'>
+                        <h5 class='card-title'>{Title}</h5>
+                        <p class='card-text text-muted'>{Description}</p>
+                        <a href='{Link}' class='btn btn-primary w-100'>Open</a>
+                    </div>
+                </div>");
+            builder.CloseElement();
+        }
+    }
+}

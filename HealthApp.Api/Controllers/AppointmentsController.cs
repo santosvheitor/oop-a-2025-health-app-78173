@@ -1,8 +1,9 @@
 using HealthApp.Data.Data;
-using HealthApp.Data.Models;
+using HealthApp.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Appointment = HealthApp.Data.Models.Appointment;
 
 namespace HealthApp.Api.Controllers;
 
@@ -86,8 +87,29 @@ public class AppointmentsController : ControllerBase
         if (appointment.DoctorId <= 0)
             return BadRequest("DoctorId é obrigatório.");
 
+        // 🔹 Definir paciente e status padrão
         appointment.PatientId = patient.Id;
-        appointment.Status ??= "Pending";
+        appointment.Status ??= AppointmentStatus.Pending.ToString();
+
+        // 🔹 Prevenção de agendamento duplicado (double booking)
+        var start = appointment.Date;
+        var end = start.AddMinutes(30); // duração fixa de 30 minutos
+
+        bool conflict = await _context.Appointments.AnyAsync(a =>
+            a.DoctorId == appointment.DoctorId &&
+            a.Status != AppointmentStatus.Cancelled.ToString() &&
+            (
+                // Há sobreposição de horários?
+                start < a.Date.AddMinutes(30) && // 30 min também para os existentes
+                a.Date < end
+            )
+        );
+
+        if (conflict)
+        {
+            // 409 = Conflict → HTTP status apropriado
+            return Conflict(new { message = "O médico já possui um agendamento neste horário." });
+        }
 
         _context.Appointments.Add(appointment);
         await _context.SaveChangesAsync();
@@ -119,7 +141,7 @@ public class AppointmentsController : ControllerBase
         if (appointment == null)
             return NotFound();
 
-        appointment.Status = "Confirmed";
+        appointment.Status = AppointmentStatus.Confirmed.ToString();
         await _context.SaveChangesAsync();
 
         return Ok(appointment);

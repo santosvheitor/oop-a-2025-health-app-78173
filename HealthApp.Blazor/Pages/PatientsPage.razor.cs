@@ -1,6 +1,8 @@
 using HealthApp.Blazor.Models;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
+using HealthApp.Domain.Models;
 using Microsoft.JSInterop;
 
 namespace HealthApp.Blazor.Pages;
@@ -19,11 +21,31 @@ public partial class PatientsPage : ComponentBase
     private AppointmentModel? rescheduleAppointment;
     private DateTime? rescheduleDateTime;
 
+    private int patientId;
+
     [Inject] private HttpClient Http { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
+        // Obtem paciente logado
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        try
+        {
+            var patient = await Http.GetFromJsonAsync<PatientModel>("api/patients/me");
+            if (patient != null)
+            {
+                patientId = patient.Id;
+            }
+        }
+        catch
+        {
+            patientId = 0;
+        }
+
         await LoadDoctors();
         await LoadAppointments();
         await LoadPrescriptions();
@@ -48,15 +70,13 @@ public partial class PatientsPage : ComponentBase
     {
         try
         {
-            var result = await Http.GetFromJsonAsync<List<PrescriptionModel>>("api/prescriptions/mine");
-            prescriptions = result ?? new();
+            prescriptions = await Http.GetFromJsonAsync<List<PrescriptionModel>>("api/prescriptions/mine") ?? new();
         }
         catch
         {
             prescriptions = new();
         }
     }
-
 
     private void SearchDoctors()
     {
@@ -93,11 +113,12 @@ public partial class PatientsPage : ComponentBase
 
     private async Task ConfirmBook()
     {
-        if (selectedDoctor == null || bookDateTime == null) return;
+        if (selectedDoctor == null || bookDateTime == null || patientId == 0) return;
 
         var create = new
         {
             DoctorId = selectedDoctor.Id,
+            PatientId = patientId,  // ⚡ Adicionado
             Date = bookDateTime.Value
         };
 
@@ -106,7 +127,7 @@ public partial class PatientsPage : ComponentBase
         {
             await CloseBookModal();
             await LoadAppointments();
-            await JS.InvokeVoidAsync("alert", "Appointment booked.");
+            await JS.InvokeVoidAsync("alert", "Appointment booked successfully.");
         }
         else
         {

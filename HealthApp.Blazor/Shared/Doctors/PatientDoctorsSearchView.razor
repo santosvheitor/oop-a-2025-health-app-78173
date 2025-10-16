@@ -1,10 +1,11 @@
 @using HealthApp.Blazor.Models
+@using Microsoft.AspNetCore.Components
 
 @code {
     [Parameter] public List<DoctorModel> Doctors { get; set; } = new();
     [Parameter] public string SearchTerm { get; set; } = string.Empty;
     [Parameter] public EventCallback OnSearch { get; set; }
-    [Parameter] public EventCallback<int>? OnBook { get; set; }
+    [Parameter] public EventCallback<int> OnBook { get; set; }
 }
 
 <div class="mb-4">
@@ -27,7 +28,7 @@ else
                 <p><strong>Specialty:</strong> @doctor.Specialty</p>
                 <p><strong>Email:</strong> @doctor.Email</p>
                 <button class="btn btn-sm btn-success mt-2"
-                        @onclick="() => OnBook?.InvokeAsync(doctor.Id)">
+                        @onclick="() => OnBook.InvokeAsync(doctor.Id)">
                     Book Appointment
                 </button>
             </div>

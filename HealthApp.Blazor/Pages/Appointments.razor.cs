@@ -14,6 +14,10 @@ public partial class Appointments : ComponentBase
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     private List<Appointment> appointments = new();
+    private Appointment newAppointment = new();
+    private List<Doctor> doctors = new();
+    private bool showAddModal = false;
+
     private bool userIsAdmin;
     private bool userIsPatient;
     private bool userIsDoctor;
@@ -27,21 +31,70 @@ public partial class Appointments : ComponentBase
         userIsPatient = user.IsInRole("Patient");
         userIsDoctor = user.IsInRole("Doctor");
 
+        await LoadAppointments();
+        await LoadDoctors();
+    }
+
+    private async Task LoadAppointments()
+    {
         try
         {
-            if (userIsPatient)
-                appointments = await Http.GetFromJsonAsync<List<Appointment>>("api/appointments/mine");
-            else
-                appointments = await Http.GetFromJsonAsync<List<Appointment>>("api/appointments");
+            appointments = userIsPatient
+                ? await Http.GetFromJsonAsync<List<Appointment>>("api/appointments/mine")
+                : await Http.GetFromJsonAsync<List<Appointment>>("api/appointments");
         }
-        catch (HttpRequestException ex)
+        catch
         {
-            Console.WriteLine($"Erro ao carregar appointments: {ex.Message}");
             appointments = new();
         }
     }
 
-    private void AddAppointment() => NavigationManager.NavigateTo("/appointments/add");
+    private async Task LoadDoctors()
+    {
+        try
+        {
+            doctors = await Http.GetFromJsonAsync<List<Doctor>>("api/doctors") ?? new();
+        }
+        catch
+        {
+            doctors = new();
+        }
+    }
+
+    private void ShowAddModal()
+    {
+        newAppointment = new Appointment { Date = DateTime.Now.AddDays(1) };
+        showAddModal = true;
+    }
+
+    private async Task AddAppointment()
+    {
+        if (newAppointment.DoctorId <= 0)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Please select a doctor.");
+            return;
+        }
+
+        var response = await Http.PostAsJsonAsync("api/appointments", newAppointment);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+            await JSRuntime.InvokeVoidAsync("alert", error?["message"] ?? "Time slot unavailable.");
+            return;
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Error creating appointment.");
+            return;
+        }
+
+        await JSRuntime.InvokeVoidAsync("alert", "Appointment created successfully!");
+        showAddModal = false;
+        await LoadAppointments();
+    }
+
     private void EditAppointment(int id) => NavigationManager.NavigateTo($"/appointments/edit/{id}");
 
     private async Task DeleteAppointment(int id)
@@ -50,30 +103,20 @@ public partial class Appointments : ComponentBase
         if (confirmed)
         {
             await Http.DeleteAsync($"api/appointments/{id}");
-            appointments = await Http.GetFromJsonAsync<List<Appointment>>("api/appointments");
+            await LoadAppointments();
         }
     }
 
     private async Task ConfirmAppointment(int id)
     {
-        // Encontrar o appointment
-        var appointment = appointments.FirstOrDefault(a => a.Id == id);
-        if (appointment != null)
+        var response = await Http.PatchAsync($"api/appointments/{id}/confirm", null);
+        if (response.IsSuccessStatusCode)
         {
-            appointment.Status = "Confirmed";
-
-            // Enviar atualização para o servidor via PUT
-            var response = await Http.PutAsJsonAsync($"api/appointments/{id}", appointment);
-            if (response.IsSuccessStatusCode)
-            {
-                // Atualizar lista local para refletir mudança
-                appointments = await Http.GetFromJsonAsync<List<Appointment>>("api/appointments");
-            }
-            else
-            {
-                var errorMsg = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Erro ao confirmar appointment: {errorMsg}");
-            }
+            await LoadAppointments();
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Error confirming appointment.");
         }
     }
 }

@@ -5,13 +5,17 @@
 
 <h3>Edit Appointment</h3>
 
-@if (!userIsAdmin)
+@if (isLoading)
 {
-    <p>You are not authorized to view this page.</p>
+    <p>Loading...</p>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
 }
 else if (appointment == null)
 {
-    <p>Loading...</p>
+    <p>Appointment not found.</p>
 }
 else
 {
@@ -19,22 +23,24 @@ else
         <DataAnnotationsValidator />
         <ValidationSummary />
 
-        <div>
+        <div class="mb-3">
             <label>Date:</label>
-            <InputDate @bind-Value="appointment.Date" />
+            <InputDate @bind-Value="appointment.Date" class="form-control" />
         </div>
-        <div>
+
+        <div class="mb-3">
             <label>Patient:</label>
-            <select @bind="appointment.PatientId">
+            <select @bind="appointment.PatientId" class="form-control">
                 @foreach (var patient in patients)
                 {
                     <option value="@patient.Id">@patient.FullName</option>
                 }
             </select>
         </div>
-        <div>
+
+        <div class="mb-3">
             <label>Doctor:</label>
-            <select @bind="appointment.DoctorId">
+            <select @bind="appointment.DoctorId" class="form-control">
                 @foreach (var doctor in doctors)
                 {
                     <option value="@doctor.Id">@doctor.FullName</option>
@@ -42,11 +48,12 @@ else
             </select>
         </div>
 
-        <div>
+        <div class="mb-3">
             <label>Status:</label>
-            <InputText @bind-Value="appointment.Status" />
+            <InputText @bind-Value="appointment.Status" class="form-control" />
         </div>
 
-        <button type="submit">Save</button>
+        <button type="submit" class="btn btn-primary me-2">Save</button>
+        <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
     </EditForm>
 }
